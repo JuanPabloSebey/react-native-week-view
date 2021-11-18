@@ -17,6 +17,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderLeftWidth: 1,
   },
+  headerContainer: {
+    alignItems: 'center',
+  },
 });
 
 export default styles;

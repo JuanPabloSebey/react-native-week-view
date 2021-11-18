@@ -23,9 +23,10 @@ const Column = ({
   format,
   style,
   textStyle,
+  textDateStyle,
   TodayComponent,
 }) => {
-  const formattedDate = getFormattedDate(column, format);
+  const formattedDate = getFormattedDate(column, format).split(' ');
   const useTodayComponent = TodayComponent && moment().isSame(column, 'days');
   const fullTextStyle = [getDayTextStyles(numberOfDays), textStyle];
 
@@ -38,7 +39,14 @@ const Column = ({
           textStyle={fullTextStyle}
         />
       ) : (
-        <Text style={fullTextStyle}>{formattedDate}</Text>
+        <View style={styles.headerContainer}>
+          <Text style={fullTextStyle}>{formattedDate[0]}</Text>
+          {formattedDate[1] && (
+            <Text style={[fullTextStyle, textDateStyle]}>
+              {formattedDate[1]}
+            </Text>
+          )}
+        </View>
       )}
     </View>
   );
@@ -50,6 +58,7 @@ const Columns = ({
   format,
   style,
   textStyle,
+  textDateStyle,
   TodayComponent,
 }) => {
   return (
@@ -59,6 +68,7 @@ const Columns = ({
           <Column
             style={style}
             textStyle={textStyle}
+            textDateStyle={textDateStyle}
             key={column}
             column={column}
             numberOfDays={numberOfDays}
@@ -77,6 +87,7 @@ const WeekViewHeader = ({
   formatDate,
   style,
   textStyle,
+  textDateStyle,
   TodayComponent,
   rightToLeft,
 }) => {
@@ -90,6 +101,7 @@ const WeekViewHeader = ({
           numberOfDays={numberOfDays}
           style={style}
           textStyle={textStyle}
+          textDateStyle={textDateStyle}
           TodayComponent={TodayComponent}
         />
       )}
