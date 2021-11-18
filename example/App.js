@@ -15,7 +15,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-import WeekView, {createFixedWeekDate} from 'react-native-week-view';
+import WeekView, {createFixedWeekDate, addLocale} from 'react-native-week-view';
 
 const generateDates = (hours, minutes) => {
   const date = new Date();
@@ -67,8 +67,49 @@ const sampleFixedEvents = [
   },
 ];
 
+addLocale('es', {
+  months: [
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
+  ],
+  monthsShort: [
+    'ENE',
+    'FEB',
+    'MAR',
+    'ABR',
+    'MAY',
+    'JUN',
+    'JUL',
+    'AGO',
+    'SEP',
+    'OCT',
+    'NOV',
+    'DIC',
+  ],
+  weekdays: [
+    'Domingo',
+    'Lunes',
+    'Martes',
+    'Miércoles',
+    'Jueves',
+    'Viernes',
+    'Sábado',
+  ],
+  weekdaysMin: ['DO', 'LU', 'MA', 'MI', 'JU', 'VI', 'SA'],
+});
+
 // For debugging purposes
-const showFixedComponent = true;
+const showFixedComponent = false;
 
 const MyRefreshComponent = ({style}) => (
   // Just an example
@@ -124,6 +165,7 @@ class App extends React.Component {
             onGridClick={this.onGridClick}
             headerStyle={styles.header}
             headerTextStyle={styles.headerText}
+            headerTextDateStyle={styles.headerTextDate}
             hourTextStyle={styles.hourText}
             eventContainerStyle={styles.eventContainer}
             formatDateHeader={showFixedComponent ? 'ddd' : 'ddd DD'}
@@ -136,6 +178,8 @@ class App extends React.Component {
             onDragEvent={this.onDragEvent}
             isRefreshing={false}
             RefreshComponent={MyRefreshComponent}
+            formatTimeLabel={'HH:mm'}
+            locale={'es'}
           />
         </SafeAreaView>
       </>
@@ -154,6 +198,10 @@ const styles = StyleSheet.create({
   },
   headerText: {
     color: 'white',
+  },
+  headerTextDate: {
+    color: '#333333',
+    marginVertical: 8,
   },
   hourText: {
     color: 'black',
