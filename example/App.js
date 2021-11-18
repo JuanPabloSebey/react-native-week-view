@@ -185,6 +185,7 @@ class App extends React.Component {
             formatTimeLabel={'HH:mm'}
             locale={'es'}
             onTimeIntervalSelected={this.onTimeIntervalSelected}
+            showClickedSlot
           />
         </SafeAreaView>
       </>
