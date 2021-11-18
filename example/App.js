@@ -15,7 +15,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-import WeekView, {createFixedWeekDate, addLocale} from 'react-native-week-view';
+import WeekView, { createFixedWeekDate, addLocale } from 'react-native-week-view';
 
 const generateDates = (hours, minutes) => {
   const date = new Date();
@@ -111,7 +111,7 @@ addLocale('es', {
 // For debugging purposes
 const showFixedComponent = false;
 
-const MyRefreshComponent = ({style}) => (
+const MyRefreshComponent = ({ style }) => (
   // Just an example
   <ActivityIndicator style={style} color="red" size="large" />
 );
@@ -122,7 +122,7 @@ class App extends React.Component {
     selectedDate: new Date(),
   };
 
-  onEventPress = ({id, color, startDate, endDate}) => {
+  onEventPress = ({ id, color, startDate, endDate }) => {
     Alert.alert(
       `event ${color} - ${id}`,
       `start: ${startDate}\nend: ${endDate}`,
@@ -146,6 +146,10 @@ class App extends React.Component {
         },
       ],
     });
+  };
+
+  onTimeIntervalSelected = (startTime, endTime) => {
+    Alert.alert(`start: ${startTime}`, `end: ${endTime}`);
   };
 
   render() {
@@ -180,6 +184,7 @@ class App extends React.Component {
             RefreshComponent={MyRefreshComponent}
             formatTimeLabel={'HH:mm'}
             locale={'es'}
+            onTimeIntervalSelected={this.onTimeIntervalSelected}
           />
         </SafeAreaView>
       </>
