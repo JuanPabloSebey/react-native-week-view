@@ -48,6 +48,8 @@ export default class WeekView extends Component {
       // currentMoment should always be the first date of the current page
       currentMoment: moment(initialDates[this.currentPageIndex]).toDate(),
       initialDates,
+      topSelectedIndex: -1,
+      bottomSelectedIndex: -1,
     };
 
     setLocale(props.locale);
@@ -76,9 +78,9 @@ export default class WeekView extends Component {
 
       this.currentPageIndex = this.pageOffset;
       this.setState({
-          currentMoment: moment(initialDates[this.currentPageIndex]).toDate(),
-          initialDates,
-        },
+        currentMoment: moment(initialDates[this.currentPageIndex]).toDate(),
+        initialDates,
+      },
         () => {
           this.eventsGrid.scrollToIndex({
             index: this.pageOffset,
@@ -184,7 +186,7 @@ export default class WeekView extends Component {
     };
 
     const newState = {};
-    let newStateCallback = () => {};
+    let newStateCallback = () => { };
     // The final target may change, if pages are added
     let targetIndex = target;
 
@@ -245,7 +247,7 @@ export default class WeekView extends Component {
       const newState = {
         currentMoment: newMoment,
       };
-      let newStateCallback = () => {};
+      let newStateCallback = () => { };
 
       if (movedPages < 0 && newPage < this.pageOffset) {
         this.prependPagesInPlace(initialDates, 1);
@@ -388,6 +390,8 @@ export default class WeekView extends Component {
       fixedHorizontally,
       showNowLine,
       nowLineColor,
+      showClickedSlot,
+      onTimeIntervalSelected,
       onDragEvent,
       isRefreshing,
       RefreshComponent,
@@ -398,6 +402,10 @@ export default class WeekView extends Component {
     const horizontalInverted =
       (prependMostRecent && !rightToLeft) ||
       (!prependMostRecent && rightToLeft);
+    const handleIntervalSelection = (startTime, endTime) => {
+      this.setState({ topSelectedIndex: startTime, bottomSelectedIndex: endTime });
+      onTimeIntervalSelected(startTime, endTime);
+    };
 
     return (
       <View style={styles.container}>
@@ -454,6 +462,7 @@ export default class WeekView extends Component {
               textStyle={hourTextStyle}
               hoursInDisplay={hoursInDisplay}
               timeStep={timeStep}
+              interval={{ start: this.state.topSelectedIndex, end: this.state.bottomSelectedIndex }}
             />
             <VirtualizedList
               data={initialDates}
@@ -484,6 +493,8 @@ export default class WeekView extends Component {
                     rightToLeft={rightToLeft}
                     showNowLine={showNowLine}
                     nowLineColor={nowLineColor}
+                    showClickedSlot={showClickedSlot}
+                    onTimeIntervalSelected={handleIntervalSelection}
                     onDragEvent={onDragEvent}
                   />
                 );
@@ -545,6 +556,8 @@ WeekView.propTypes = {
   prependMostRecent: PropTypes.bool,
   showNowLine: PropTypes.bool,
   nowLineColor: PropTypes.string,
+  showClickedSlot: PropTypes.bool,
+  onTimeIntervalSelected: PropTypes.func,
   onDragEvent: PropTypes.func,
   isRefreshing: PropTypes.bool,
   RefreshComponent: PropTypes.elementType,

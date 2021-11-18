@@ -4,6 +4,7 @@ const styles = StyleSheet.create({
   columnContainer: {
     paddingTop: 10,
     width: 60,
+    zIndex: 1,
   },
   label: {
     flex: -1,

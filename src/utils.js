@@ -53,3 +53,15 @@ export const createFixedWeekDate = (day, hours, minutes = 0, seconds = 0) => {
   date.seconds(seconds);
   return date.toDate();
 };
+
+export const intervalIndexToTimeString = (index) => {
+  return (
+    `${Math.floor(index / 4) < 10
+      ? `0${Math.floor(index / 4)}`
+      : Math.floor(index / 4)
+    }:${Math.floor((index * 15) % 60) < 10
+      ? `0${Math.floor((index * 15) % 60)}`
+      : Math.floor((index * 15) % 60)
+    }`
+  );
+};
