@@ -161,9 +161,9 @@ class Events extends PureComponent {
 
     this.state = {
       dayIndex: null,
-      hour: null,
-      topTimeIndex: -1,
-      bottomTimeIndex: -1,
+      hour: 0,
+      topTimeIndex: 0,
+      bottomTimeIndex: 4,
     };
 
     this.height = React.createRef();
@@ -173,43 +173,43 @@ class Events extends PureComponent {
     this.panTopButton = new Animated.ValueXY();
     this.panBottomButton = new Animated.ValueXY();
 
-    this.topButtonPosition = new Animated.Value(-5);
-    this.bottomButtonPosition = new Animated.Value(this.offset - 8);
+    this.topButtonPosition = new Animated.Value(0);
+    this.bottomButtonPosition = new Animated.Value(this.offset);
 
     this.panTopButtonResponder = PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onPanResponderGrant: (_, gestureState) => {
-        Vibration.vibrate(100);
-        this.panTopButton.setOffset({
-          x: this.panTopButton.x._value,
+        /* Vibration.vibrate(100); */
+        console.log('PAN', this.panTopButton.x._value, this.panTopButton.y._value)
+        this.panTopButton.setValue({
+          x: 0,
           y: this.panTopButton.y._value,
         });
       },
       onPanResponderMove: (_, gestureState) => {
+        /* console.log(gestureState.dy) */
         if (this.heightAnim._value > this.offset / 4) {
-          this.state.bottomTimeIndex === -1
-            ? this.setState({
-              topTimeIndex: Math.round(
-                (4 * (
-                  (this.state.hour * this.offset)
-                  + gestureState.dy
-                  - (this.offset / 4)
-                  - this.height.current
-                  + this.offset
-                )) / this.offset,
-              ),
-            })
-            : this.setState({
-              topTimeIndex: Math.floor(
-                (4 * (
-                  ((this.state.bottomTimeIndex * this.offset) / 4)
-                  + gestureState.dy
-                  - this.height.current
-                )) / this.offset,
-              ),
-            });
-          this.panTopButton.setValue({
-            x: gestureState.dx,
+          this.setState({
+            topTimeIndex: Math.floor(
+
+              (4 * (((this.state.bottomTimeIndex / 4) * this.offset)
+                - this.height.current
+                + gestureState.dy) / this.offset)
+
+            ),
+          });
+
+          console.log('topTimeIndex', Math.floor(
+
+            (4 * (((this.state.bottomTimeIndex / 4) * this.offset)
+              - this.height.current
+              + gestureState.dy) / this.offset)
+
+          )
+          )
+
+          this.panTopButton.setOffset({
+            x: 0,
             y: gestureState.dy,
           });
           this.heightAnim.setValue(this.height.current - gestureState.dy);
@@ -231,7 +231,7 @@ class Events extends PureComponent {
     this.panBottomButtonResponder = PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
-        Vibration.vibrate(100);
+        /* Vibration.vibrate(100); */
         this.panBottomButton.setOffset({
           x: this.panBottomButton.x._value,
           y: this.panBottomButton.y._value,
@@ -327,6 +327,7 @@ class Events extends PureComponent {
   );
 
   onGridTouch = (event, dayIndex, longPress) => {
+    console.log('onGridTouch')
     const { initialDate, onGridClick, onGridLongPress } = this.props;
     const callback = longPress ? onGridLongPress : onGridClick;
     if (!callback) {
@@ -345,7 +346,7 @@ class Events extends PureComponent {
     });
 
     this.heightAnim.setValue(this.offset);
-    this.bottomButtonPosition.setValue(this.offset - 8);
+    this.bottomButtonPosition.setValue(this.offset);
     this.panTopButton.y.setValue(0);
     this.height.current = this.offset;
 
@@ -458,11 +459,11 @@ class Events extends PureComponent {
                   {
                     // FIX Replaced 60 = WIDTH
                     position: 'absolute',
-                    left: 1 + (this.state.dayIndex * 60) / 8,
+                    left: 1 + ((CONTAINER_WIDTH / numberOfDays) * this.state.dayIndex),
                     top: 17 + this.state.hour * this.offset,
-                    width: (60 * 1) / 8 - 1,
+                    width: (CONTAINER_WIDTH / numberOfDays) - 15,
                     borderWidth: 2,
-                    borderColor: '#FE41C8',
+                    borderColor: '#F00',
                     borderRadius: 3,
                     height: this.heightAnim,
                     zIndex: 1000,
@@ -474,8 +475,8 @@ class Events extends PureComponent {
                     position: 'absolute',
                     top: this.topButtonPosition,
                     left: 10,
-                    width: 12,
-                    height: 12,
+                    width: 20,
+                    height: 20,
                     backgroundColor: '#FE41C8',
                     borderRadius: 6,
                     zIndex: 100000,
@@ -485,12 +486,14 @@ class Events extends PureComponent {
                 <Animated.View
                   style={{
                     position: 'absolute',
-                    top: this.bottomButtonPosition,
-                    right: 10,
-                    width: 12,
-                    height: 12,
-                    backgroundColor: '#FE41C8',
-                    borderRadius: 6,
+                    bottom: 0,
+                    right: 0,
+                    width: 20,
+                    height: 16,
+                    backgroundColor: '#DD6390',
+                    borderTopLeftRadius: 10,
+                    borderColor: 'rgb(231, 173, 195)',
+                    borderWidth: 0,
                   }}
                   {...this.panBottomButtonResponder.panHandlers}
                 />

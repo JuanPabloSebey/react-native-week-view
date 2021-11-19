@@ -13,6 +13,7 @@ import {
   StatusBar,
   Alert,
   ActivityIndicator,
+  PermissionsAndroid,
 } from 'react-native';
 
 import WeekView, { createFixedWeekDate, addLocale } from 'react-native-week-view';
@@ -30,22 +31,22 @@ const sampleEvents = [
   {
     id: 1,
     description: 'Event 1',
-    startDate: generateDates(0),
-    endDate: generateDates(2),
+    startDate: generateDates(0, 0),
+    endDate: generateDates(2, 0),
     color: 'blue',
   },
   {
     id: 2,
     description: 'Event 2',
-    startDate: generateDates(1),
-    endDate: generateDates(4),
+    startDate: generateDates(1, 0),
+    endDate: generateDates(4, 0),
     color: 'red',
   },
   {
     id: 3,
     description: 'Event 3',
-    startDate: generateDates(-5),
-    endDate: generateDates(-3),
+    startDate: generateDates(-5, 0),
+    endDate: generateDates(-3, 0),
     color: 'green',
   },
 ];
@@ -122,6 +123,26 @@ class App extends React.Component {
     selectedDate: new Date(),
   };
 
+  componentDidMount() {
+    console.log('ASDADASDASDASDASD')
+    const asd = async () => {
+      const granted = await PermissionsAndroid.request(
+        'android.permission.VIBRATE',
+        {
+          title: "Cool Photo App Camera Permission",
+          message:
+            "Cool Photo App needs access to your camera " +
+            "so you can take awesome pictures.",
+          buttonNeutral: "Ask Me Later",
+          buttonNegative: "Cancel",
+          buttonPositive: "OK"
+        }
+      );
+      console.log('GRANTED', granted)
+    }
+    asd()
+  }
+
   onEventPress = ({ id, color, startDate, endDate }) => {
     Alert.alert(
       `event ${color} - ${id}`,
@@ -131,7 +152,7 @@ class App extends React.Component {
 
   onGridClick = (event, startHour, date) => {
     const dateStr = date.toISOString().split('T')[0];
-    Alert.alert(`Date: ${dateStr}\nStart hour: ${startHour}`);
+    /* Alert.alert(`Date: ${dateStr}\nStart hour: ${startHour}`); */
   };
 
   onDragEvent = (event, newStartDate, newEndDate) => {
@@ -149,11 +170,11 @@ class App extends React.Component {
   };
 
   onTimeIntervalSelected = (startTime, endTime) => {
-    Alert.alert(`start: ${startTime}`, `end: ${endTime}`);
+    console.log(`start: ${startTime}`, `end: ${endTime}`);
   };
 
   render() {
-    const {events, selectedDate} = this.state;
+    const { events, selectedDate } = this.state;
     return (
       <>
         <StatusBar barStyle="dark-content" />
@@ -164,7 +185,7 @@ class App extends React.Component {
             }}
             events={events}
             selectedDate={selectedDate}
-            numberOfDays={7}
+            numberOfDays={3}
             onEventPress={this.onEventPress}
             onGridClick={this.onGridClick}
             headerStyle={styles.header}
