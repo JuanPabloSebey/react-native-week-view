@@ -174,55 +174,39 @@ class Events extends PureComponent {
     this.panBottomButton = new Animated.ValueXY();
 
     this.topButtonPosition = new Animated.Value(0);
-    this.bottomButtonPosition = new Animated.Value(this.offset);
 
     this.panTopButtonResponder = PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onPanResponderGrant: (_, gestureState) => {
         /* Vibration.vibrate(100); */
-        console.log('PAN', this.panTopButton.x._value, this.panTopButton.y._value)
         this.panTopButton.setValue({
           x: 0,
           y: this.panTopButton.y._value,
         });
       },
       onPanResponderMove: (_, gestureState) => {
-        /* console.log(gestureState.dy) */
-        if (this.heightAnim._value > this.offset / 4) {
-          this.setState({
-            topTimeIndex: Math.floor(
+        const _topIndex = Math.floor(
+          (4 * (((this.state.bottomTimeIndex / 4) * this.offset)
+            - this.height.current
+            + gestureState.dy) / this.offset)
+        )
 
-              (4 * (((this.state.bottomTimeIndex / 4) * this.offset)
-                - this.height.current
-                + gestureState.dy) / this.offset)
-
-            ),
-          });
-
-          console.log('topTimeIndex', Math.floor(
-
-            (4 * (((this.state.bottomTimeIndex / 4) * this.offset)
-              - this.height.current
-              + gestureState.dy) / this.offset)
-
-          )
-          )
-
-          this.panTopButton.setOffset({
-            x: 0,
-            y: gestureState.dy,
-          });
-          this.heightAnim.setValue(this.height.current - gestureState.dy);
-          this.bottomButtonPosition.setValue(
-            this.height.current - gestureState.dy - 8,
-          );
-        } else {
-          if (this.height.current - gestureState.dy > this.offset / 4)
-            this.heightAnim.setValue(this.height.current - gestureState.dy);
+        if (_topIndex >= this.state.bottomTimeIndex || _topIndex === this.state.topTimeIndex) {
+          return
         }
+        this.setState({
+          topTimeIndex: _topIndex,
+        });
+
+        this.panTopButton.setValue({
+          x: 0,
+          y: _topIndex * this.offset / 4,
+        });
+        const newHeight = (this.state.bottomTimeIndex - _topIndex) * (this.offset / 4)
+        this.heightAnim.setValue(newHeight === 0 ? 1 : newHeight);
       },
       onPanResponderRelease: (_, gestureState) => {
-        this.height.current = this.height.current - gestureState.dy;
+        this.height.current = (this.state.bottomTimeIndex - this.state.topTimeIndex) * (this.offset / 4);
         this.panTopButton.flattenOffset();
       },
       onPanResponderTerminationRequest: () => false,
@@ -232,47 +216,36 @@ class Events extends PureComponent {
       onStartShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
         /* Vibration.vibrate(100); */
-        this.panBottomButton.setOffset({
+        this.panBottomButton.setValue({
           x: this.panBottomButton.x._value,
           y: this.panBottomButton.y._value,
         });
       },
       onPanResponderMove: (_, gestureState) => {
-        if (this.heightAnim._value > this.offset / 4) {
-          this.state.topTimeIndex === -1
-            ? this.setState({
-              bottomTimeIndex: Math.round(
-                (4 * (
-                  (this.offset * (this.state.hour + 1))
-                  + gestureState.dy
-                  - (this.offset / 4)
-                )) / this.offset,
-              ),
-            })
-            : this.setState({
-              bottomTimeIndex: Math.floor(
-                (4 * (
-                  ((this.state.topTimeIndex * this.offset) / 4)
-                  + this.height.current
-                  + gestureState.dy
-                )) / this.offset,
-              ),
-            });
-          this.panBottomButton.setValue({
-            x: gestureState.dx,
-            y: gestureState.dy,
-          });
-          this.heightAnim.setValue(this.height.current + gestureState.dy);
-          this.bottomButtonPosition.setValue(
-            this.height.current + gestureState.dy - 8,
-          );
-        } else {
-          if (this.height.current + gestureState.dy > this.offset / 4)
-            this.heightAnim.setValue(this.height.current + gestureState.dy);
+
+        const _bottomIndex = Math.floor(
+          (4 * (((this.state.topTimeIndex / 4) * this.offset)
+            + this.height.current
+            + gestureState.dy) / this.offset)
+        )
+
+        if (_bottomIndex <= this.state.topTimeIndex || _bottomIndex === this.state.bottomTimeIndex) {
+          return
         }
+
+        this.setState({
+          bottomTimeIndex: _bottomIndex,
+        });
+        this.panBottomButton.setValue({
+          x: gestureState.dx,
+          y: _bottomIndex * this.offset / 4,
+        });
+
+        const newHeight = (_bottomIndex - this.state.topTimeIndex) * (this.offset / 4)
+        this.heightAnim.setValue(newHeight);
       },
       onPanResponderRelease: (_, gestureState) => {
-        this.height.current = this.height.current + gestureState.dy;
+        this.height.current = (this.state.bottomTimeIndex - this.state.topTimeIndex) * (this.offset / 4);
         this.panBottomButton.flattenOffset();
       },
       onPanResponderTerminationRequest: () => false,
@@ -346,7 +319,6 @@ class Events extends PureComponent {
     });
 
     this.heightAnim.setValue(this.offset);
-    this.bottomButtonPosition.setValue(this.offset);
     this.panTopButton.y.setValue(0);
     this.height.current = this.offset;
 
