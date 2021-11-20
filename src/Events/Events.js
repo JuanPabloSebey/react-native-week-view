@@ -179,9 +179,10 @@ class Events extends PureComponent {
       onStartShouldSetPanResponder: () => true,
       onPanResponderGrant: (_, gestureState) => {
         /* Vibration.vibrate(100); */
+        console.log('TOP', this.state.topTimeIndex, (this.state.topTimeIndex / 4) * this.offset)
         this.panTopButton.setValue({
           x: 0,
-          y: this.panTopButton.y._value,
+          y: (this.state.topTimeIndex) * this.offset / 4,
         });
       },
       onPanResponderMove: (_, gestureState) => {
@@ -194,13 +195,14 @@ class Events extends PureComponent {
         if (_topIndex >= this.state.bottomTimeIndex || _topIndex === this.state.topTimeIndex) {
           return
         }
-        this.setState({
-          topTimeIndex: _topIndex,
-        });
 
         this.panTopButton.setValue({
           x: 0,
-          y: _topIndex * this.offset / 4,
+          y: (_topIndex) * this.offset / 4,
+        });
+
+        this.setState({
+          topTimeIndex: _topIndex,
         });
         const newHeight = (this.state.bottomTimeIndex - _topIndex) * (this.offset / 4)
         this.heightAnim.setValue(newHeight === 0 ? 1 : newHeight);
@@ -216,8 +218,8 @@ class Events extends PureComponent {
       onStartShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
         /* Vibration.vibrate(100); */
-        this.panBottomButton.setValue({
-          x: this.panBottomButton.x._value,
+        this.panBottomButton.setOffset({
+          x: 0,
           y: this.panBottomButton.y._value,
         });
       },
@@ -319,7 +321,7 @@ class Events extends PureComponent {
     });
 
     this.heightAnim.setValue(this.offset);
-    this.panTopButton.y.setValue(0);
+    this.panTopButton.y.setValue(hour * this.offset);
     this.height.current = this.offset;
 
     callback(event, hour, date);
@@ -432,7 +434,7 @@ class Events extends PureComponent {
                     // FIX Replaced 60 = WIDTH
                     position: 'absolute',
                     left: 1 + ((CONTAINER_WIDTH / numberOfDays) * this.state.dayIndex),
-                    top: 17 + this.state.hour * this.offset,
+                    top: 17 + this.panTopButton.y._value,
                     width: (CONTAINER_WIDTH / numberOfDays) - 15,
                     borderWidth: 2,
                     borderColor: '#F00',
@@ -440,7 +442,6 @@ class Events extends PureComponent {
                     height: this.heightAnim,
                     zIndex: 1000,
                   },
-                  { transform: [{ translateY: this.panTopButton.y }] },
                 ]}>
                 <Animated.View
                   style={{
