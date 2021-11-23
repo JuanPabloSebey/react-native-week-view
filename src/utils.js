@@ -8,9 +8,10 @@ export const CONTAINER_WIDTH = SCREEN_WIDTH - 60;
 export const DATE_STR_FORMAT = 'YYYY-MM-DD';
 export const availableNumberOfDays = [1, 3, 5, 7];
 
-export const minutesToYDimension = (hoursInDisplay, minutes) => {
+export const minutesToYDimension = (hoursInDisplay, minutes, minHour) => {
   const minutesInDisplay = 60 * hoursInDisplay;
-  return (minutes * CONTAINER_HEIGHT) / minutesInDisplay;
+  const startMinutes = minutes - (minHour * 60)
+  return startMinutes === 0 ? 0 : startMinutes * (CONTAINER_HEIGHT / minutesInDisplay);
 };
 
 export const getTimeLabelHeight = (hoursInDisplay, minutesStep) => {

@@ -31,19 +31,23 @@ const areEventsOverlapped = (event1EndDate, event2StartDate) => {
   return endDate.isSameOrAfter(event2StartDate);
 };
 
-const getStyleForEvent = (event, regularItemWidth, hoursInDisplay) => {
+const getStyleForEvent = (event, regularItemWidth, hoursInDisplay, minHour, maxHour) => {
   const startDate = moment(event.startDate);
   const startHours = startDate.hours();
   const startMinutes = startDate.minutes();
   const totalStartMinutes = startHours * MINUTES_IN_HOUR + startMinutes;
-  const top = minutesToYDimension(hoursInDisplay, totalStartMinutes);
-  const deltaMinutes = moment(event.endDate).diff(event.startDate, 'minutes');
-  const height = minutesToYDimension(hoursInDisplay, deltaMinutes);
+  const top = minutesToYDimension(hoursInDisplay, totalStartMinutes, minHour);
+  const endDate = moment(event.endDate);
+  const endHours = endDate.hours();
+  const endMinutes = endDate.minutes();
+  const totalEndMinutes = endHours * MINUTES_IN_HOUR + endMinutes;
+  const endY = minutesToYDimension(hoursInDisplay, totalEndMinutes, minHour);
+
 
   return {
     top: top + CONTENT_OFFSET,
     left: 0,
-    height,
+    height: endY - top,
     width: regularItemWidth,
   };
 };
@@ -115,12 +119,12 @@ const addOverlappedToArray = (baseArr, overlappedArr, itemWidth) => {
   });
 };
 
-const getEventsWithPosition = (totalEvents, regularItemWidth, hoursInDisplay) => {
+const getEventsWithPosition = (totalEvents, regularItemWidth, hoursInDisplay, minHour, maxHour) => {
   return totalEvents.map((events) => {
     let overlappedSoFar = []; // Store events overlapped until now
     let lastDate = null;
     const eventsWithStyle = events.reduce((eventsAcc, event) => {
-      const style = getStyleForEvent(event, regularItemWidth, hoursInDisplay);
+      const style = getStyleForEvent(event, regularItemWidth, hoursInDisplay, minHour, maxHour);
       const eventWithStyle = {
         data: event,
         style,
@@ -161,9 +165,9 @@ class Events extends PureComponent {
 
     this.state = {
       dayIndex: null,
-      hour: 0,
-      topTimeIndex: 0,
-      bottomTimeIndex: 4,
+      hour: props.minHour,
+      topTimeIndex: props.minHour * 4,
+      bottomTimeIndex: props.minHour * 4 + 4,
     };
 
     this.height = React.createRef();
@@ -179,26 +183,24 @@ class Events extends PureComponent {
       onStartShouldSetPanResponder: () => true,
       onPanResponderGrant: (_, gestureState) => {
         /* Vibration.vibrate(100); */
-        console.log('TOP', this.state.topTimeIndex, (this.state.topTimeIndex / 4) * this.offset)
         this.panTopButton.setValue({
           x: 0,
-          y: (this.state.topTimeIndex) * this.offset / 4,
+          y: (this.state.topTimeIndex - (this.props.minHour * 4)) * this.offset / 4,
         });
       },
       onPanResponderMove: (_, gestureState) => {
         const _topIndex = Math.floor(
-          (4 * (((this.state.bottomTimeIndex / 4) * this.offset)
+          (4 * ((((this.state.bottomTimeIndex - (this.props.minHour * 4)) / 4) * this.offset)
             - this.height.current
             + gestureState.dy) / this.offset)
-        )
+        ) + (this.props.minHour * 4)
 
         if (_topIndex >= this.state.bottomTimeIndex || _topIndex === this.state.topTimeIndex) {
           return
         }
-
         this.panTopButton.setValue({
           x: 0,
-          y: (_topIndex) * this.offset / 4,
+          y: (_topIndex - (this.props.minHour * 4)) * this.offset / 4,
         });
 
         this.setState({
@@ -206,10 +208,12 @@ class Events extends PureComponent {
         });
         const newHeight = (this.state.bottomTimeIndex - _topIndex) * (this.offset / 4)
         this.heightAnim.setValue(newHeight === 0 ? 1 : newHeight);
+        this.handleTimeIntervalChanged()
       },
       onPanResponderRelease: (_, gestureState) => {
         this.height.current = (this.state.bottomTimeIndex - this.state.topTimeIndex) * (this.offset / 4);
         this.panTopButton.flattenOffset();
+        this.handleTimeIntervalSelected();
       },
       onPanResponderTerminationRequest: () => false,
     });
@@ -245,32 +249,44 @@ class Events extends PureComponent {
 
         const newHeight = (_bottomIndex - this.state.topTimeIndex) * (this.offset / 4)
         this.heightAnim.setValue(newHeight);
+        this.handleTimeIntervalChanged()
       },
       onPanResponderRelease: (_, gestureState) => {
         this.height.current = (this.state.bottomTimeIndex - this.state.topTimeIndex) * (this.offset / 4);
         this.panBottomButton.flattenOffset();
+        this.handleTimeIntervalSelected();
+
       },
       onPanResponderTerminationRequest: () => false,
     });
   };
 
   componentDidUpdate = (_, prevState) => {
-    if (
-      prevState.topTimeIndex !== this.state.topTimeIndex ||
-      prevState.bottomTimeIndex !== this.state.bottomTimeIndex
-    ) {
-      this.props.onTimeIntervalSelected &&
-        this.props.onTimeIntervalSelected(
-          this.state.topTimeIndex,
-          this.state.bottomTimeIndex,
-        )
+    if (this.state.topTimeIndex !== prevState.topTimeIndex ||
+      this.state.bottomTimeIndex !== prevState.bottomTimeIndex) {
+      this.handleTimeIntervalChanged && this.handleTimeIntervalChanged();
     }
   };
+
+  handleTimeIntervalSelected = () => {
+
+    const { initialDate } = this.props;
+    this.props.onTimeIntervalSelected &&
+      this.props.onTimeIntervalSelected(
+        moment(initialDate).add(this.state.dayIndex, 'day').startOf('day').add(Math.floor(this.state.topTimeIndex / 4), 'hours').add((this.state.topTimeIndex % 4) * 15, 'minutes').toDate(),
+        moment(initialDate).add(this.state.dayIndex, 'day').startOf('day').add(Math.floor(this.state.bottomTimeIndex / 4), 'hours').add((this.state.bottomTimeIndex % 4) * 15, 'minutes').toDate(),
+      )
+  }
+
+  handleTimeIntervalChanged = () => {
+    this.props.onTimeIntervalChanged &&
+      this.props.onTimeIntervalChanged(this.state.topTimeIndex, this.state.bottomTimeIndex)
+  }
 
   yToHour = (y) => {
     const { hoursInDisplay } = this.props;
     const hour = (y * hoursInDisplay) / CONTAINER_HEIGHT;
-    return hour;
+    return hour + this.props.minHour;
   };
 
   getEventItemWidth = (padded = true) => {
@@ -280,7 +296,7 @@ class Events extends PureComponent {
   };
 
   processEvents = memoizeOne(
-    (eventsByDate, initialDate, numberOfDays, hoursInDisplay, rightToLeft) => {
+    (eventsByDate, initialDate, numberOfDays, hoursInDisplay, rightToLeft, minHour, maxHour) => {
       // totalEvents stores events in each day of numberOfDays
       // example: [[event1, event2], [event3, event4], [event5]], each child array
       // is events for specific day in range
@@ -296,13 +312,14 @@ class Events extends PureComponent {
         totalEvents,
         regularItemWidth,
         hoursInDisplay,
+        minHour,
+        maxHour,
       );
       return totalEventsWithPosition;
     },
   );
 
   onGridTouch = (event, dayIndex, longPress) => {
-    console.log('onGridTouch')
     const { initialDate, onGridClick, onGridLongPress } = this.props;
     const callback = longPress ? onGridLongPress : onGridClick;
     if (!callback) {
@@ -312,7 +329,6 @@ class Events extends PureComponent {
     const hour = Math.floor(this.yToHour(locationY - CONTENT_OFFSET));
 
     const date = moment(initialDate).add(dayIndex, 'day').toDate();
-
     this.setState({
       dayIndex,
       hour,
@@ -321,7 +337,7 @@ class Events extends PureComponent {
     });
 
     this.heightAnim.setValue(this.offset);
-    this.panTopButton.y.setValue(hour * this.offset);
+    this.panTopButton.y.setValue((hour - this.props.minHour) * this.offset);
     this.height.current = this.offset;
 
     callback(event, hour, date);
@@ -332,7 +348,6 @@ class Events extends PureComponent {
     if (!onDragEvent) {
       return;
     }
-
     const movedDays = Math.floor(newX / this.getEventItemWidth());
 
     const startTime = event.startDate.getTime();
@@ -347,7 +362,6 @@ class Events extends PureComponent {
     const newEndDate = new Date(
       newStartDate.getTime() + event.originalDuration,
     );
-
     onDragEvent(event, newStartDate, newEndDate);
   };
 
@@ -374,6 +388,8 @@ class Events extends PureComponent {
       nowLineColor,
       showClickedSlot,
       onDragEvent,
+      minHour,
+      maxHour,
     } = this.props;
     const totalEvents = this.processEvents(
       eventsByDate,
@@ -381,8 +397,9 @@ class Events extends PureComponent {
       numberOfDays,
       hoursInDisplay,
       rightToLeft,
+      minHour,
+      maxHour,
     );
-
     return (
       <View style={styles.container}>
         {times.map((time) => (
@@ -397,82 +414,88 @@ class Events extends PureComponent {
           </View>
         ))}
         <View style={styles.eventsContainer}>
-          {totalEvents.map((eventsInSection, dayIndex) => (
-            <TouchableWithoutFeedback
-              onPress={(e) => this.onGridTouch(e, dayIndex, false)}
-              onLongPress={(e) => this.onGridTouch(e, dayIndex, true)}
-              key={dayIndex}
-            >
-              <View style={styles.eventsColumn}>
-                {showNowLine && this.isToday(dayIndex) && (
-                  <NowLine
-                    color={nowLineColor}
-                    hoursInDisplay={hoursInDisplay}
-                    width={this.getEventItemWidth(false)}
-                  />
-                )}
-                {eventsInSection.map((item) => (
-                  <Event
-                    key={item.data.id}
-                    event={item.data}
-                    position={item.style}
-                    onPress={onEventPress}
-                    onLongPress={onEventLongPress}
-                    EventComponent={EventComponent}
-                    containerStyle={eventContainerStyle}
-                    onDrag={onDragEvent && this.onDragEvent}
-                  />
-                ))}
-              </View>
-            </TouchableWithoutFeedback>
-          ))}
-          {showClickedSlot && (
-            <TouchableWithoutFeedback onPress={() => { }}>
-              <Animated.View
-                style={[
-                  {
-                    // FIX Replaced 60 = WIDTH
-                    position: 'absolute',
-                    left: 1 + ((CONTAINER_WIDTH / numberOfDays) * this.state.dayIndex),
-                    top: 17 + this.panTopButton.y._value,
-                    width: (CONTAINER_WIDTH / numberOfDays) - 15,
-                    borderWidth: 2,
-                    borderColor: '#F00',
-                    borderRadius: 3,
-                    height: this.heightAnim,
-                    zIndex: 1000,
-                  },
-                ]}>
-                <Animated.View
-                  style={{
-                    position: 'absolute',
-                    top: this.topButtonPosition,
-                    left: 10,
-                    width: 20,
-                    height: 20,
-                    backgroundColor: '#FE41C8',
-                    borderRadius: 6,
-                    zIndex: 100000,
-                  }}
-                  {...this.panTopButtonResponder.panHandlers}
-                />
-                <Animated.View
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    right: 0,
-                    width: 20,
-                    height: 16,
-                    backgroundColor: '#DD6390',
-                    borderTopLeftRadius: 10,
-                    borderColor: 'rgb(231, 173, 195)',
-                    borderWidth: 0,
-                  }}
-                  {...this.panBottomButtonResponder.panHandlers}
-                />
-              </Animated.View>
-            </TouchableWithoutFeedback>
+          {totalEvents.map((eventsInSection, dayIndex) => {
+            return (
+              <TouchableWithoutFeedback
+                onPress={(e) => this.onGridTouch(e, dayIndex, false)}
+                onLongPress={(e) => this.onGridTouch(e, dayIndex, true)}
+                key={dayIndex}
+              >
+                <View style={styles.eventsColumn}>
+                  {showNowLine && this.isToday(dayIndex) && (
+                    <NowLine
+                      color={nowLineColor}
+                      hoursInDisplay={hoursInDisplay}
+                      width={this.getEventItemWidth(false)}
+                      minHour={minHour}
+                    />
+                  )}
+                  {eventsInSection.map((item) => (
+                    <Event
+                      key={item.data.id}
+                      event={item.data}
+                      position={item.style}
+                      onPress={onEventPress}
+                      onLongPress={onEventLongPress}
+                      EventComponent={EventComponent}
+                      containerStyle={eventContainerStyle}
+                      onDrag={onDragEvent && this.onDragEvent}
+                    />
+                  ))}
+                  {showClickedSlot && this.state.dayIndex === dayIndex && (
+
+                    <TouchableWithoutFeedback onPress={() => { }}>
+                      <Animated.View
+                        style={[
+                          {
+                            // FIX Replaced 60 = WIDTH
+                            position: 'absolute',
+                            left: 1,
+                            top: 17 + this.panTopButton.y._value,
+                            width: this.getEventItemWidth(false) - 15,
+                            borderWidth: 2,
+                            borderColor: '#F00',
+                            borderRadius: 3,
+                            height: this.heightAnim,
+                            zIndex: 1000,
+                          },
+                        ]}>
+                        <Animated.View
+                          style={{
+                            position: 'absolute',
+                            top: this.topButtonPosition,
+                            left: 10,
+                            width: 20,
+                            height: 20,
+                            backgroundColor: '#FE41C8',
+                            borderRadius: 6,
+                            zIndex: 100000,
+                          }}
+                          {...this.panTopButtonResponder.panHandlers}
+                        />
+                        <Animated.View
+                          style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            right: 0,
+                            width: 20,
+                            height: 16,
+                            backgroundColor: '#DD6390',
+                            borderTopLeftRadius: 10,
+                            borderColor: 'rgb(231, 173, 195)',
+                            borderWidth: 0,
+                          }}
+                          {...this.panBottomButtonResponder.panHandlers}
+                        />
+                      </Animated.View>
+                    </TouchableWithoutFeedback>
+                  )}
+                </View>
+              </TouchableWithoutFeedback>
+            )
+          }
           )}
+
         </View>
       </View>
     );
@@ -497,6 +520,8 @@ Events.propTypes = {
   showNowLine: PropTypes.bool,
   nowLineColor: PropTypes.string,
   onDragEvent: PropTypes.func,
+  minHour: PropTypes.number,
+  maxHour: PropTypes.number,
 };
 
 export default Events;
