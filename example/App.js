@@ -56,14 +56,12 @@ const _disabledDates = [
   [
     {
       id: 1,
-      description: 'Event 1',
       startDate: moment().subtract(1, 'day').startOf('day').add(0, 'hours').add(0, 'minutes').toDate(),
       endDate: moment().subtract(1, 'day').startOf('day').add(9, 'hours').add(0, 'minutes').toDate(),
       color: 'lightgrey',
     },
     {
       id: 2,
-      description: 'Event 1',
       startDate: moment().subtract(1, 'day').startOf('day').add(14, 'hours').add(0, 'minutes').toDate(),
       endDate: moment().subtract(1, 'day').startOf('day').add(23, 'hours').add(0, 'minutes').toDate(),
       color: 'lightgrey',
@@ -71,8 +69,7 @@ const _disabledDates = [
   ],
   [
     {
-      id: 2,
-      description: 'Event 1',
+      id: 3,
       startDate: moment().subtract(1, 'day').startOf('day').add(14, 'hours').add(0, 'minutes').toDate(),
       endDate: moment().subtract(1, 'day').startOf('day').add(16, 'hours').add(0, 'minutes').toDate(),
       color: 'lightgrey',
@@ -83,8 +80,7 @@ const _disabledDates = [
   [],
   [],
   [{
-    id: 2,
-    description: 'Event 1',
+    id: 4,
     startDate: moment().subtract(1, 'day').startOf('day').add(19, 'hours').add(0, 'minutes').toDate(),
     endDate: moment().subtract(1, 'day').startOf('day').add(23, 'hours').add(0, 'minutes').toDate(),
     color: 'lightgrey',
