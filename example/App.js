@@ -52,6 +52,45 @@ const sampleEvents = [
   },
 ];
 
+const _disabledDates = [
+  [
+    {
+      id: 1,
+      description: 'Event 1',
+      startDate: moment().subtract(1, 'day').startOf('day').add(0, 'hours').add(0, 'minutes').toDate(),
+      endDate: moment().subtract(1, 'day').startOf('day').add(9, 'hours').add(0, 'minutes').toDate(),
+      color: 'lightgrey',
+    },
+    {
+      id: 2,
+      description: 'Event 1',
+      startDate: moment().subtract(1, 'day').startOf('day').add(14, 'hours').add(0, 'minutes').toDate(),
+      endDate: moment().subtract(1, 'day').startOf('day').add(23, 'hours').add(0, 'minutes').toDate(),
+      color: 'lightgrey',
+    }
+  ],
+  [
+    {
+      id: 2,
+      description: 'Event 1',
+      startDate: moment().subtract(1, 'day').startOf('day').add(14, 'hours').add(0, 'minutes').toDate(),
+      endDate: moment().subtract(1, 'day').startOf('day').add(16, 'hours').add(0, 'minutes').toDate(),
+      color: 'lightgrey',
+    }
+  ],
+  [],
+  [],
+  [],
+  [],
+  [{
+    id: 2,
+    description: 'Event 1',
+    startDate: moment().subtract(1, 'day').startOf('day').add(19, 'hours').add(0, 'minutes').toDate(),
+    endDate: moment().subtract(1, 'day').startOf('day').add(23, 'hours').add(0, 'minutes').toDate(),
+    color: 'lightgrey',
+  }],
+]
+
 
 addLocale('es', {
   months: [
@@ -106,6 +145,7 @@ class App extends React.Component {
   state = {
     events: sampleEvents,
     selectedDate: new Date(),
+    disabledDates: _disabledDates
   };
 
   componentDidMount() {
@@ -144,6 +184,13 @@ class App extends React.Component {
     console.log(`start: ${startTime}`, `end: ${endTime}`);
   };
 
+  handleOnSelecting = (start, end) => {
+    if (moment(start).isBefore(moment(start).startOf('day').add(9, 'hour'))) {
+      return false
+    }
+    return true
+  }
+
   render() {
     const { events, selectedDate } = this.state;
     return (
@@ -180,6 +227,8 @@ class App extends React.Component {
             showClickedSlot
             minHour={8}
             maxHour={22}
+            onSelecting={this.handleOnSelecting}
+            disabledRanges={this.state.disabledDates}
           />
         </SafeAreaView>
       </>

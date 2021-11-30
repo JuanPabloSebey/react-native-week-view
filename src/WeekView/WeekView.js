@@ -24,6 +24,7 @@ import {
   setLocale,
   CONTAINER_WIDTH,
 } from '../utils';
+import DisabledRange from '../DisabledRange/DisabledRange';
 
 /* const MINUTES_IN_DAY = 60 * 24; */
 
@@ -397,6 +398,7 @@ export default class WeekView extends Component {
       RefreshComponent,
       minHour,
       maxHour,
+      disabledRanges,
     } = this.props;
     const { currentMoment, initialDates } = this.state;
     const times = this.calculateTimes(timeStep, formatTimeLabel, maxHour, minHour);
@@ -510,6 +512,8 @@ export default class WeekView extends Component {
                     onDragEvent={onDragEvent}
                     minHour={minHour}
                     maxHour={maxHour}
+                    onSelecting={this.props.onSelecting}
+                    disabledRanges={disabledRanges}
                   />
                 );
               }}
@@ -577,6 +581,8 @@ WeekView.propTypes = {
   RefreshComponent: PropTypes.elementType,
   minHour: PropTypes.number,
   maxHOur: PropTypes.number,
+  onSelecting: PropTypes.func,
+  disabledRanges: Events.propTypes.disabledRanges,
 };
 
 WeekView.defaultProps = {
@@ -593,4 +599,5 @@ WeekView.defaultProps = {
   RefreshComponent: ActivityIndicator,
   minHour: 0,
   maxHour: 24,
+  disabledRanges: [[], [], [], [], [], [], []]
 };

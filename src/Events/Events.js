@@ -1,7 +1,10 @@
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
-import { Animated, PanResponder, Text, TouchableWithoutFeedback, View, Vibration } from 'react-native';
-import moment from 'moment';
+import { Animated, PanResponder, TouchableWithoutFeedback, View, Vibration } from 'react-native';
+import Moment from 'moment';
+import { extendMoment } from 'moment-range';
+
+const moment = extendMoment(Moment);
 import memoizeOne from 'memoize-one';
 
 import NowLine from '../NowLine/NowLine';
@@ -18,6 +21,7 @@ import {
 } from '../utils';
 
 import styles from './Events.styles';
+import DisabledRange from '../DisabledRange/DisabledRange';
 
 const MINUTES_IN_HOUR = 60;
 const EVENT_HORIZONTAL_PADDING = 15;
@@ -179,6 +183,8 @@ class Events extends PureComponent {
 
     this.topButtonPosition = new Animated.Value(0);
 
+
+
     this.panTopButtonResponder = PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onPanResponderGrant: (_, gestureState) => {
@@ -193,9 +199,15 @@ class Events extends PureComponent {
           (4 * ((((this.state.bottomTimeIndex - (this.props.minHour * 4)) / 4) * this.offset)
             - this.height.current
             + gestureState.dy) / this.offset)
-        ) + (this.props.minHour * 4)
+        ) + (this.props.minHour * 4);
 
-        if (_topIndex >= this.state.bottomTimeIndex || _topIndex === this.state.topTimeIndex) {
+        const _start = this.indexToDate(_topIndex)
+        const _end = this.indexToDate(this.state.bottomTimeIndex)
+
+        if (_topIndex >= this.state.bottomTimeIndex ||
+          _topIndex === this.state.topTimeIndex ||
+          !this.canSelect(_start, _end) ||
+          this.isValidRange(_start, _end)) {
           return
         }
         this.panTopButton.setValue({
@@ -235,7 +247,12 @@ class Events extends PureComponent {
             + gestureState.dy) / this.offset)
         )
 
-        if (_bottomIndex <= this.state.topTimeIndex || _bottomIndex === this.state.bottomTimeIndex) {
+        const _start = this.indexToDate(this.state.topTimeIndex)
+        const _end = this.indexToDate(_bottomIndex)
+
+        if (_bottomIndex <= this.state.topTimeIndex ||
+          _bottomIndex === this.state.bottomTimeIndex ||
+          this.isValidRange(_start, _end)) {
           return
         }
 
@@ -268,13 +285,45 @@ class Events extends PureComponent {
     }
   };
 
-  handleTimeIntervalSelected = () => {
+  isValidRange = (start, end) => {
+    return !this.canSelect(start, end) ||
+      (this.props.onSelecting && !this.props.onSelecting(start, end))
+  }
 
+  canSelect = memoizeOne((start, end) => {
+    if (!this.props.disabledRanges) {
+      return true
+    }
+    const selectRange = moment.range(start, end)
+    const disabledRanges = this.props.disabledRanges[moment(start).day()]
+
+    for (const range of disabledRanges) {
+      const rangeStartMoment = moment(range.startDate).year(selectRange.start.year()).month(selectRange.start.month()).date(selectRange.start.date())
+      const rangeEndMoment = moment(range.endDate).year(selectRange.end.year()).month(selectRange.end.month()).date(selectRange.end.date())
+      const disabledRange = moment.range(rangeStartMoment, rangeEndMoment)
+      if (selectRange.overlaps(disabledRange, { adjacent: false })) {
+        return false
+      }
+    }
+    return true
+
+  })
+
+  indexToDate = (hourIndex) => {
     const { initialDate } = this.props;
+    return moment(initialDate)
+      .add(this.state.dayIndex, 'day')
+      .startOf('day')
+      .add(Math.floor(hourIndex / 4), 'hours')
+      .add((hourIndex % 4) * 15, 'minutes')
+      .toDate()
+  }
+
+  handleTimeIntervalSelected = () => {
     this.props.onTimeIntervalSelected &&
       this.props.onTimeIntervalSelected(
-        moment(initialDate).add(this.state.dayIndex, 'day').startOf('day').add(Math.floor(this.state.topTimeIndex / 4), 'hours').add((this.state.topTimeIndex % 4) * 15, 'minutes').toDate(),
-        moment(initialDate).add(this.state.dayIndex, 'day').startOf('day').add(Math.floor(this.state.bottomTimeIndex / 4), 'hours').add((this.state.bottomTimeIndex % 4) * 15, 'minutes').toDate(),
+        this.indexToDate(this.state.topTimeIndex),
+        this.indexToDate(this.state.bottomTimeIndex)
       )
   }
 
@@ -305,7 +354,6 @@ class Events extends PureComponent {
         const dateStr = date.format(DATE_STR_FORMAT);
         return eventsByDate[dateStr] || [];
       });
-
       const regularItemWidth = this.getEventItemWidth();
 
       const totalEventsWithPosition = getEventsWithPosition(
@@ -317,6 +365,43 @@ class Events extends PureComponent {
       );
       return totalEventsWithPosition;
     },
+  );
+
+  processDisabledDates = memoizeOne((disabledRanges, hoursInDisplay, minHour, maxHour) => {
+    // totalEvents stores events in each day of numberOfDays
+    // example: [[event1, event2], [event3, event4], [event5]], each child array
+    // is events for specific day in range
+    const regularItemWidth = this.getEventItemWidth(false);
+    if (!disabledRanges) {
+      return null;
+    }
+
+    const _disabledRanges = disabledRanges.map(dates => dates.map(d => {
+      const start = moment(d.startDate)
+      const end = moment(d.endDate)
+      if (start.hour() < minHour) {
+        start.hour(minHour)
+      }
+
+      if (end.hour() > maxHour) {
+        end.hour(maxHour)
+      }
+      return {
+        ...d,
+        startDate: start.toDate(),
+        endDate: end.toDate(),
+      }
+
+    }))
+    const totalEventsWithPosition = getEventsWithPosition(
+      _disabledRanges,
+      regularItemWidth,
+      hoursInDisplay,
+      minHour,
+      maxHour,
+    );
+    return totalEventsWithPosition;
+  },
   );
 
   onGridTouch = (event, dayIndex, longPress) => {
@@ -390,6 +475,7 @@ class Events extends PureComponent {
       onDragEvent,
       minHour,
       maxHour,
+      disabledRanges,
     } = this.props;
     const totalEvents = this.processEvents(
       eventsByDate,
@@ -400,6 +486,13 @@ class Events extends PureComponent {
       minHour,
       maxHour,
     );
+
+    const _disabledRanges = this.processDisabledDates(
+      disabledRanges,
+      hoursInDisplay,
+      minHour,
+      maxHour,
+    )
     return (
       <View style={styles.container}>
         {times.map((time) => (
@@ -430,6 +523,15 @@ class Events extends PureComponent {
                       minHour={minHour}
                     />
                   )}
+                  {_disabledRanges && _disabledRanges[(moment(initialDate).day() + dayIndex) % 7] &&
+                    _disabledRanges[(moment(initialDate).day() + dayIndex) % 7].map((item, index) => (
+                      <DisabledRange
+                        key={`disabled-${dayIndex}-${index}`}
+                        event={item.data}
+                        position={item.style}
+                        containerStyle={eventContainerStyle}
+                      />
+                    ))}
                   {eventsInSection.map((item) => (
                     <Event
                       key={item.data.id}
@@ -522,6 +624,8 @@ Events.propTypes = {
   onDragEvent: PropTypes.func,
   minHour: PropTypes.number,
   maxHour: PropTypes.number,
+  onSelecting: PropTypes.func,
+  disabledRanges: PropTypes.arrayOf(PropTypes.arrayOf(DisabledRange.propTypes.event)),
 };
 
 export default Events;
