@@ -206,7 +206,7 @@ class Events extends PureComponent {
         if (_topIndex >= this.state.bottomTimeIndex ||
           _topIndex === this.state.topTimeIndex ||
           !this.canSelect(_start, _end) ||
-          this.isValidRange(_start, _end)) {
+          this.isInvalidRange(_start, _end)) {
           return
         }
         this.panTopButton.setValue({
@@ -222,7 +222,7 @@ class Events extends PureComponent {
         this.heightAnim.setValue(newHeight === 0 ? 1 : newHeight);
         this.handleTimeIntervalChanged();
       },
-      onPanResponderRelease: (_, gestureState) => {
+      onPanResponderRelease: () => {
         this.height.current =
           (this.state.bottomTimeIndex - this.state.topTimeIndex) *
           (this.offset / 4);
@@ -256,7 +256,7 @@ class Events extends PureComponent {
 
         if (_bottomIndex <= this.state.topTimeIndex ||
           _bottomIndex === this.state.bottomTimeIndex ||
-          this.isValidRange(_start, _end)) {
+          this.isInvalidRange(_start, _end)) {
           return
         }
 
@@ -293,7 +293,7 @@ class Events extends PureComponent {
     }
   };
 
-isValidRange = (start, end) => {
+  isInvalidRange = (start, end) => {
     return !this.canSelect(start, end) ||
       (this.props.onSelecting && !this.props.onSelecting(start, end))
   }
@@ -317,10 +317,10 @@ isValidRange = (start, end) => {
 
   })
 
-  indexToDate = (hourIndex) => {
+  indexToDate = (hourIndex, dayIndex) => {
     const { initialDate } = this.props;
     return moment(initialDate)
-      .add(this.state.dayIndex, 'day')
+      .add(dayIndex || this.state.dayIndex, 'day')
       .startOf('day')
       .add(Math.floor(hourIndex / 4), 'hours')
       .add((hourIndex % 4) * 15, 'minutes')
@@ -432,8 +432,17 @@ isValidRange = (start, end) => {
     if (!callback) {
       return;
     }
+
+
     const { locationY } = event.nativeEvent;
     const hour = Math.floor(this.yToHour(locationY - CONTENT_OFFSET));
+
+    const _start = this.indexToDate(hour * 4, dayIndex)
+    const _end = this.indexToDate(hour * 4 + 4, dayIndex)
+    console.log('IS INVALID', this.isInvalidRange(_start, _end), _start, _end, locationY)
+    if (this.isInvalidRange(_start, _end)) {
+      return
+    }
 
     const date = moment(initialDate).add(dayIndex, 'day').toDate();
     this.setState({
@@ -546,11 +555,14 @@ isValidRange = (start, end) => {
                   )}
                   {_disabledRanges && _disabledRanges[(moment(initialDate).day() + dayIndex) % 7] &&
                     _disabledRanges[(moment(initialDate).day() + dayIndex) % 7].map((item, index) => (
+
+
                       <DisabledRange
                         key={`disabled-${dayIndex}-${index}`}
                         event={item.data}
                         position={item.style}
                         containerStyle={eventContainerStyle}
+
                       />
                     ))}
                   {eventsInSection.map((item) => (
@@ -566,7 +578,7 @@ isValidRange = (start, end) => {
                     />
                   ))}
                   {showClickedSlot && this.state.dayIndex === dayIndex && (
-                    <TouchableWithoutFeedback onPress={() => {}}>
+                    <TouchableWithoutFeedback onPress={() => { }}>
                       <Animated.View
                         style={{
                           position: 'absolute',

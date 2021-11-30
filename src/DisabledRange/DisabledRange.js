@@ -10,6 +10,7 @@ const DisabledRange = ({
 
   return (
     <View
+      pointerEvents={'none'}
       style={[
         styles.container,
         {
@@ -20,6 +21,7 @@ const DisabledRange = ({
           backgroundColor: event.color,
         },
       ]}
+
     >
     </View>
   );
