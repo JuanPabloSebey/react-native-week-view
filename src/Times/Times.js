@@ -10,12 +10,12 @@ const Times = ({ times, hoursInDisplay, timeStep, textStyle, interval, minHour, 
     <View style={styles.columnContainer}>
       {times.map((time, index) => (
         <View key={time} style={[styles.label, { height }]}>
-          <Text style={[styles.text, textStyle]}>{time}</Text>
+          <Text style={[styles.text, textStyle, { position: 'absolute' }]}>{time}</Text>
           {
             !!interval.start &&
             interval.start > (index + minHour) * 4 &&
             interval.start < (index + 1 + minHour) * 4 &&
-            <Text style={[styles.text, textStyle, { marginTop: (interval.start % 4) * height / 4 - 14 }]}>
+            <Text style={[styles.text, textStyle, { position: 'absolute' }, { marginTop: (interval.start % 4) * height / 4 }]}>
               {intervalIndexToTimeString(interval.start)}
             </Text>
           }
@@ -23,13 +23,14 @@ const Times = ({ times, hoursInDisplay, timeStep, textStyle, interval, minHour, 
             !!interval.end &&
             interval.end > (index + minHour) * 4 &&
             interval.end < (index + 1 + minHour) * 4 &&
-            <Text style={[styles.text, textStyle, { marginTop: (interval.end % 4) * height / 4 - 14 }]}>
+            <Text style={[styles.text, textStyle, { position: 'absolute' }, { marginTop: ((interval.end % 4) * height / 4) }]}>
               {intervalIndexToTimeString(interval.end)}
             </Text>
           }
         </View>
-      ))}
-    </View>
+      ))
+      }
+    </View >
   );
 };
 
