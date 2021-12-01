@@ -1,7 +1,10 @@
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
-import { Animated, PanResponder, Text, TouchableWithoutFeedback, View, Vibration } from 'react-native';
-import moment from 'moment';
+import { Animated, PanResponder, TouchableWithoutFeedback, View, Vibration } from 'react-native';
+import Moment from 'moment';
+import { extendMoment } from 'moment-range';
+
+const moment = extendMoment(Moment);
 import memoizeOne from 'memoize-one';
 
 import NowLine from '../NowLine/NowLine';
@@ -18,6 +21,7 @@ import {
 } from '../utils';
 
 import styles from './Events.styles';
+import DisabledRange from '../DisabledRange/DisabledRange';
 
 const MINUTES_IN_HOUR = 60;
 const EVENT_HORIZONTAL_PADDING = 15;
@@ -31,19 +35,22 @@ const areEventsOverlapped = (event1EndDate, event2StartDate) => {
   return endDate.isSameOrAfter(event2StartDate);
 };
 
-const getStyleForEvent = (event, regularItemWidth, hoursInDisplay) => {
+const getStyleForEvent = (event, regularItemWidth, hoursInDisplay, minHour) => {
   const startDate = moment(event.startDate);
   const startHours = startDate.hours();
   const startMinutes = startDate.minutes();
   const totalStartMinutes = startHours * MINUTES_IN_HOUR + startMinutes;
-  const top = minutesToYDimension(hoursInDisplay, totalStartMinutes);
-  const deltaMinutes = moment(event.endDate).diff(event.startDate, 'minutes');
-  const height = minutesToYDimension(hoursInDisplay, deltaMinutes);
+  const top = minutesToYDimension(hoursInDisplay, totalStartMinutes, minHour);
+  const endDate = moment(event.endDate);
+  const endHours = endDate.hours();
+  const endMinutes = endDate.minutes();
+  const totalEndMinutes = endHours * MINUTES_IN_HOUR + endMinutes;
+  const endY = minutesToYDimension(hoursInDisplay, totalEndMinutes, minHour);
 
   return {
     top: top + CONTENT_OFFSET,
     left: 0,
-    height,
+    height: endY - top,
     width: regularItemWidth,
   };
 };
@@ -82,10 +89,7 @@ const addOverlappedToArray = (baseArr, overlappedArr, itemWidth) => {
           overlappedArr[lastEvtInLaneIndex];
         if (
           !lastEvtInLane ||
-          !areEventsOverlapped(
-            lastEvtInLane.data.endDate,
-            event.data.startDate,
-          )
+          !areEventsOverlapped(lastEvtInLane.data.endDate, event.data.startDate)
         ) {
           // Place in this lane
           latestByLane[lane] = index;
@@ -115,12 +119,24 @@ const addOverlappedToArray = (baseArr, overlappedArr, itemWidth) => {
   });
 };
 
-const getEventsWithPosition = (totalEvents, regularItemWidth, hoursInDisplay) => {
+const getEventsWithPosition = (
+  totalEvents,
+  regularItemWidth,
+  hoursInDisplay,
+  minHour,
+  maxHour,
+) => {
   return totalEvents.map((events) => {
     let overlappedSoFar = []; // Store events overlapped until now
     let lastDate = null;
     const eventsWithStyle = events.reduce((eventsAcc, event) => {
-      const style = getStyleForEvent(event, regularItemWidth, hoursInDisplay);
+      const style = getStyleForEvent(
+        event,
+        regularItemWidth,
+        hoursInDisplay,
+        minHour,
+        maxHour,
+      );
       const eventWithStyle = {
         data: event,
         style,
@@ -131,21 +147,13 @@ const getEventsWithPosition = (totalEvents, regularItemWidth, hoursInDisplay) =>
         const endDate = moment(event.endDate);
         lastDate = lastDate ? moment.max(endDate, lastDate) : endDate;
       } else {
-        addOverlappedToArray(
-          eventsAcc,
-          overlappedSoFar,
-          regularItemWidth,
-        );
+        addOverlappedToArray(eventsAcc, overlappedSoFar, regularItemWidth);
         overlappedSoFar = [eventWithStyle];
         lastDate = moment(event.endDate);
       }
       return eventsAcc;
     }, []);
-    addOverlappedToArray(
-      eventsWithStyle,
-      overlappedSoFar,
-      regularItemWidth,
-    );
+    addOverlappedToArray(eventsWithStyle, overlappedSoFar, regularItemWidth);
     return eventsWithStyle;
   });
 };
@@ -161,9 +169,8 @@ class Events extends PureComponent {
 
     this.state = {
       dayIndex: null,
-      hour: null,
-      topTimeIndex: -1,
-      bottomTimeIndex: -1,
+      topTimeIndex: props.minHour * 4,
+      bottomTimeIndex: props.minHour * 4 + 4,
     };
 
     this.height = React.createRef();
@@ -173,57 +180,54 @@ class Events extends PureComponent {
     this.panTopButton = new Animated.ValueXY();
     this.panBottomButton = new Animated.ValueXY();
 
-    this.topButtonPosition = new Animated.Value(-5);
-    this.bottomButtonPosition = new Animated.Value(this.offset - 8);
+    this.topButtonPosition = new Animated.Value(0);
 
     this.panTopButtonResponder = PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-      onPanResponderGrant: (_, gestureState) => {
-        Vibration.vibrate(100);
-        this.panTopButton.setOffset({
-          x: this.panTopButton.x._value,
-          y: this.panTopButton.y._value,
+      onPanResponderGrant: () => {
+        /* Vibration.vibrate(100); */
+        this.panTopButton.setValue({
+          x: 0,
+          y:
+            ((this.state.topTimeIndex - this.props.minHour * 4) * this.offset) /
+            4,
         });
       },
       onPanResponderMove: (_, gestureState) => {
-        if (this.heightAnim._value > this.offset / 4) {
-          this.state.bottomTimeIndex === -1
-            ? this.setState({
-              topTimeIndex: Math.round(
-                (4 * (
-                  (this.state.hour * this.offset)
-                  + gestureState.dy
-                  - (this.offset / 4)
-                  - this.height.current
-                  + this.offset
-                )) / this.offset,
-              ),
-            })
-            : this.setState({
-              topTimeIndex: Math.floor(
-                (4 * (
-                  ((this.state.bottomTimeIndex * this.offset) / 4)
-                  + gestureState.dy
-                  - this.height.current
-                )) / this.offset,
-              ),
-            });
-          this.panTopButton.setValue({
-            x: gestureState.dx,
-            y: gestureState.dy,
-          });
-          this.heightAnim.setValue(this.height.current - gestureState.dy);
-          this.bottomButtonPosition.setValue(
-            this.height.current - gestureState.dy - 8,
-          );
-        } else {
-          if (this.height.current - gestureState.dy > this.offset / 4)
-            this.heightAnim.setValue(this.height.current - gestureState.dy);
+        const _topIndex = Math.floor(
+          (4 * ((((this.state.bottomTimeIndex - (this.props.minHour * 4)) / 4) * this.offset)
+            - this.height.current
+            + gestureState.dy) / this.offset)
+        ) + (this.props.minHour * 4);
+
+        const _start = this.indexToDate(_topIndex)
+        const _end = this.indexToDate(this.state.bottomTimeIndex)
+
+        if (_topIndex >= this.state.bottomTimeIndex ||
+          _topIndex === this.state.topTimeIndex ||
+          !this.canSelect(_start, _end) ||
+          this.isInvalidRange(_start, _end)) {
+          return
         }
+        this.panTopButton.setValue({
+          x: 0,
+          y: ((_topIndex - this.props.minHour * 4) * this.offset) / 4,
+        });
+
+        this.setState({
+          topTimeIndex: _topIndex,
+        });
+        const newHeight =
+          (this.state.bottomTimeIndex - _topIndex) * (this.offset / 4);
+        this.heightAnim.setValue(newHeight === 0 ? 1 : newHeight);
+        this.handleTimeIntervalChanged();
       },
-      onPanResponderRelease: (_, gestureState) => {
-        this.height.current = this.height.current - gestureState.dy;
+      onPanResponderRelease: () => {
+        this.height.current =
+          (this.state.bottomTimeIndex - this.state.topTimeIndex) *
+          (this.offset / 4);
         this.panTopButton.flattenOffset();
+        this.handleTimeIntervalSelected();
       },
       onPanResponderTerminationRequest: () => false,
     });
@@ -231,71 +235,120 @@ class Events extends PureComponent {
     this.panBottomButtonResponder = PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
-        Vibration.vibrate(100);
+        /* Vibration.vibrate(100); */
         this.panBottomButton.setOffset({
-          x: this.panBottomButton.x._value,
+          x: 0,
           y: this.panBottomButton.y._value,
         });
       },
       onPanResponderMove: (_, gestureState) => {
-        if (this.heightAnim._value > this.offset / 4) {
-          this.state.topTimeIndex === -1
-            ? this.setState({
-              bottomTimeIndex: Math.round(
-                (4 * (
-                  (this.offset * (this.state.hour + 1))
-                  + gestureState.dy
-                  - (this.offset / 4)
-                )) / this.offset,
-              ),
-            })
-            : this.setState({
-              bottomTimeIndex: Math.floor(
-                (4 * (
-                  ((this.state.topTimeIndex * this.offset) / 4)
-                  + this.height.current
-                  + gestureState.dy
-                )) / this.offset,
-              ),
-            });
-          this.panBottomButton.setValue({
-            x: gestureState.dx,
-            y: gestureState.dy,
-          });
-          this.heightAnim.setValue(this.height.current + gestureState.dy);
-          this.bottomButtonPosition.setValue(
-            this.height.current + gestureState.dy - 8,
-          );
-        } else {
-          if (this.height.current + gestureState.dy > this.offset / 4)
-            this.heightAnim.setValue(this.height.current + gestureState.dy);
+
+        const _bottomIndex = Math.floor(
+          (4 *
+            ((this.state.topTimeIndex / 4) * this.offset +
+              this.height.current +
+              gestureState.dy)) /
+          this.offset,
+        );
+
+        const _start = this.indexToDate(this.state.topTimeIndex)
+        const _end = this.indexToDate(_bottomIndex)
+
+        if (_bottomIndex <= this.state.topTimeIndex ||
+          _bottomIndex === this.state.bottomTimeIndex ||
+          this.isInvalidRange(_start, _end)) {
+          return
         }
+
+        this.setState({
+          bottomTimeIndex: _bottomIndex,
+        });
+        this.panBottomButton.setValue({
+          x: gestureState.dx,
+          y: (_bottomIndex * this.offset) / 4,
+        });
+
+        const newHeight =
+          (_bottomIndex - this.state.topTimeIndex) * (this.offset / 4);
+        this.heightAnim.setValue(newHeight);
+        this.handleTimeIntervalChanged();
       },
-      onPanResponderRelease: (_, gestureState) => {
-        this.height.current = this.height.current + gestureState.dy;
+      onPanResponderRelease: () => {
+        this.height.current =
+          (this.state.bottomTimeIndex - this.state.topTimeIndex) *
+          (this.offset / 4);
         this.panBottomButton.flattenOffset();
+        this.handleTimeIntervalSelected();
       },
       onPanResponderTerminationRequest: () => false,
     });
-  };
+  }
 
   componentDidUpdate = (_, prevState) => {
     if (
-      prevState.topTimeIndex !== this.state.topTimeIndex ||
-      prevState.bottomTimeIndex !== this.state.bottomTimeIndex
+      this.state.topTimeIndex !== prevState.topTimeIndex ||
+      this.state.bottomTimeIndex !== prevState.bottomTimeIndex
     ) {
-      this.props.onTimeIntervalSelected &&
-        this.props.onTimeIntervalSelected(
-          this.state.topTimeIndex,
-          this.state.bottomTimeIndex,
-        )
+      this.handleTimeIntervalChanged && this.handleTimeIntervalChanged();
     }
+  };
+
+  isInvalidRange = (start, end) => {
+    return !this.canSelect(start, end) ||
+      (this.props.onSelecting && !this.props.onSelecting(start, end))
+  }
+
+  canSelect = memoizeOne((start, end) => {
+    if (!this.props.disabledRanges) {
+      return true
+    }
+    const selectRange = moment.range(start, end)
+    const disabledRanges = this.props.disabledRanges[moment(start).day()]
+
+    for (const range of disabledRanges) {
+      const rangeStartMoment = moment(range.startDate).year(selectRange.start.year()).month(selectRange.start.month()).date(selectRange.start.date())
+      const rangeEndMoment = moment(range.endDate).year(selectRange.end.year()).month(selectRange.end.month()).date(selectRange.end.date())
+      const disabledRange = moment.range(rangeStartMoment, rangeEndMoment)
+      if (selectRange.overlaps(disabledRange, { adjacent: false })) {
+        return false
+      }
+    }
+    return true
+
+  })
+
+  indexToDate = (hourIndex, dayIndex) => {
+    const { initialDate } = this.props;
+    return moment(initialDate)
+      .add(dayIndex || this.state.dayIndex, 'day')
+      .startOf('day')
+      .add(Math.floor(hourIndex / 4), 'hours')
+      .add((hourIndex % 4) * 15, 'minutes')
+      .toDate()
+  }
+
+  handleTimeIntervalSelected = () => {
+
+    const { initialDate } = this.props;
+    this.props.onTimeIntervalSelected &&
+      this.props.onTimeIntervalSelected(
+        this.indexToDate(this.state.topTimeIndex),
+        this.indexToDate(this.state.bottomTimeIndex)
+      )
+  }
+
+  handleTimeIntervalChanged = () => {
+    this.props.onTimeIntervalChanged &&
+      this.props.onTimeIntervalChanged(
+        this.state.topTimeIndex,
+        this.state.bottomTimeIndex,
+      );
   };
 
   yToHour = (y) => {
     const { hoursInDisplay } = this.props;
     const hour = (y * hoursInDisplay) / CONTAINER_HEIGHT;
-    return hour;
+    return hour + this.props.minHour;
   };
 
   getEventItemWidth = (padded = true) => {
@@ -305,7 +358,15 @@ class Events extends PureComponent {
   };
 
   processEvents = memoizeOne(
-    (eventsByDate, initialDate, numberOfDays, hoursInDisplay, rightToLeft) => {
+    (
+      eventsByDate,
+      initialDate,
+      numberOfDays,
+      hoursInDisplay,
+      rightToLeft,
+      minHour,
+      maxHour,
+    ) => {
       // totalEvents stores events in each day of numberOfDays
       // example: [[event1, event2], [event3, event4], [event5]], each child array
       // is events for specific day in range
@@ -321,9 +382,48 @@ class Events extends PureComponent {
         totalEvents,
         regularItemWidth,
         hoursInDisplay,
+        minHour,
+        maxHour,
       );
       return totalEventsWithPosition;
     },
+  );
+
+  processDisabledDates = memoizeOne((disabledRanges, hoursInDisplay, minHour, maxHour) => {
+    // totalEvents stores events in each day of numberOfDays
+    // example: [[event1, event2], [event3, event4], [event5]], each child array
+    // is events for specific day in range
+    const regularItemWidth = this.getEventItemWidth(false);
+    if (!disabledRanges) {
+      return null;
+    }
+
+    const _disabledRanges = disabledRanges.map(dates => dates.map(d => {
+      const start = moment(d.startDate)
+      const end = moment(d.endDate)
+      if (start.hour() < minHour) {
+        start.hour(minHour)
+      }
+
+      if (end.hour() > maxHour) {
+        end.hour(maxHour)
+      }
+      return {
+        ...d,
+        startDate: start.toDate(),
+        endDate: end.toDate(),
+      }
+
+    }))
+    const totalEventsWithPosition = getEventsWithPosition(
+      _disabledRanges,
+      regularItemWidth,
+      hoursInDisplay,
+      minHour,
+      maxHour,
+    );
+    return totalEventsWithPosition;
+  },
   );
 
   onGridTouch = (event, dayIndex, longPress) => {
@@ -332,21 +432,27 @@ class Events extends PureComponent {
     if (!callback) {
       return;
     }
+
+
     const { locationY } = event.nativeEvent;
     const hour = Math.floor(this.yToHour(locationY - CONTENT_OFFSET));
 
-    const date = moment(initialDate).add(dayIndex, 'day').toDate();
+    const _start = this.indexToDate(hour * 4, dayIndex)
+    const _end = this.indexToDate(hour * 4 + 4, dayIndex)
+    console.log('IS INVALID', this.isInvalidRange(_start, _end), _start, _end, locationY)
+    if (this.isInvalidRange(_start, _end)) {
+      return
+    }
 
+    const date = moment(initialDate).add(dayIndex, 'day').toDate();
     this.setState({
       dayIndex,
-      hour,
       topTimeIndex: 4 * hour,
       bottomTimeIndex: 4 * (hour + 1),
     });
 
     this.heightAnim.setValue(this.offset);
-    this.bottomButtonPosition.setValue(this.offset - 8);
-    this.panTopButton.y.setValue(0);
+    this.panTopButton.y.setValue((hour - this.props.minHour) * this.offset);
     this.height.current = this.offset;
 
     callback(event, hour, date);
@@ -357,7 +463,6 @@ class Events extends PureComponent {
     if (!onDragEvent) {
       return;
     }
-
     const movedDays = Math.floor(newX / this.getEventItemWidth());
 
     const startTime = event.startDate.getTime();
@@ -372,7 +477,6 @@ class Events extends PureComponent {
     const newEndDate = new Date(
       newStartDate.getTime() + event.originalDuration,
     );
-
     onDragEvent(event, newStartDate, newEndDate);
   };
 
@@ -399,6 +503,9 @@ class Events extends PureComponent {
       nowLineColor,
       showClickedSlot,
       onDragEvent,
+      minHour,
+      maxHour,
+      disabledRanges,
     } = this.props;
     const totalEvents = this.processEvents(
       eventsByDate,
@@ -406,8 +513,16 @@ class Events extends PureComponent {
       numberOfDays,
       hoursInDisplay,
       rightToLeft,
+      minHour,
+      maxHour,
     );
 
+    const _disabledRanges = this.processDisabledDates(
+      disabledRanges,
+      hoursInDisplay,
+      minHour,
+      maxHour,
+    )
     return (
       <View style={styles.container}>
         {times.map((time) => (
@@ -422,81 +537,93 @@ class Events extends PureComponent {
           </View>
         ))}
         <View style={styles.eventsContainer}>
-          {totalEvents.map((eventsInSection, dayIndex) => (
-            <TouchableWithoutFeedback
-              onPress={(e) => this.onGridTouch(e, dayIndex, false)}
-              onLongPress={(e) => this.onGridTouch(e, dayIndex, true)}
-              key={dayIndex}
-            >
-              <View style={styles.eventsColumn}>
-                {showNowLine && this.isToday(dayIndex) && (
-                  <NowLine
-                    color={nowLineColor}
-                    hoursInDisplay={hoursInDisplay}
-                    width={this.getEventItemWidth(false)}
-                  />
-                )}
-                {eventsInSection.map((item) => (
-                  <Event
-                    key={item.data.id}
-                    event={item.data}
-                    position={item.style}
-                    onPress={onEventPress}
-                    onLongPress={onEventLongPress}
-                    EventComponent={EventComponent}
-                    containerStyle={eventContainerStyle}
-                    onDrag={onDragEvent && this.onDragEvent}
-                  />
-                ))}
-              </View>
-            </TouchableWithoutFeedback>
-          ))}
-          {showClickedSlot && (
-            <TouchableWithoutFeedback onPress={() => { }}>
-              <Animated.View
-                style={[
-                  {
-                    // FIX Replaced 60 = WIDTH
-                    position: 'absolute',
-                    left: 1 + (this.state.dayIndex * 60) / 8,
-                    top: 17 + this.state.hour * this.offset,
-                    width: (60 * 1) / 8 - 1,
-                    borderWidth: 2,
-                    borderColor: '#FE41C8',
-                    borderRadius: 3,
-                    height: this.heightAnim,
-                    zIndex: 1000,
-                  },
-                  { transform: [{ translateY: this.panTopButton.y }] },
-                ]}>
-                <Animated.View
-                  style={{
-                    position: 'absolute',
-                    top: this.topButtonPosition,
-                    left: 10,
-                    width: 12,
-                    height: 12,
-                    backgroundColor: '#FE41C8',
-                    borderRadius: 6,
-                    zIndex: 100000,
-                  }}
-                  {...this.panTopButtonResponder.panHandlers}
-                />
-                <Animated.View
-                  style={{
-                    position: 'absolute',
-                    top: this.bottomButtonPosition,
-                    right: 10,
-                    width: 12,
-                    height: 12,
-                    backgroundColor: '#FE41C8',
-                    borderRadius: 6,
-                  }}
-                  {...this.panBottomButtonResponder.panHandlers}
-                />
-              </Animated.View>
-            </TouchableWithoutFeedback>
-          )}
+          {totalEvents.map((eventsInSection, dayIndex) => {
+            return (
+              <TouchableWithoutFeedback
+                onPress={(e) => this.onGridTouch(e, dayIndex, false)}
+                onLongPress={(e) => this.onGridTouch(e, dayIndex, true)}
+                key={dayIndex}
+              >
+                <View style={styles.eventsColumn}>
+                  {showNowLine && this.isToday(dayIndex) && (
+                    <NowLine
+                      color={nowLineColor}
+                      hoursInDisplay={hoursInDisplay}
+                      width={this.getEventItemWidth(false)}
+                      minHour={minHour}
+                    />
+                  )}
+                  {_disabledRanges && _disabledRanges[(moment(initialDate).day() + dayIndex) % 7] &&
+                    _disabledRanges[(moment(initialDate).day() + dayIndex) % 7].map((item, index) => (
+
+
+                      <DisabledRange
+                        key={`disabled-${dayIndex}-${index}`}
+                        event={item.data}
+                        position={item.style}
+                        containerStyle={eventContainerStyle}
+
+                      />
+                    ))}
+                  {eventsInSection.map((item) => (
+                    <Event
+                      key={item.data.id}
+                      event={item.data}
+                      position={item.style}
+                      onPress={onEventPress}
+                      onLongPress={onEventLongPress}
+                      EventComponent={EventComponent}
+                      containerStyle={eventContainerStyle}
+                      onDrag={onDragEvent && this.onDragEvent}
+                    />
+                  ))}
+                  {showClickedSlot && this.state.dayIndex === dayIndex && (
+                    <TouchableWithoutFeedback onPress={() => { }}>
+                      <Animated.View
+                        style={{
+                          position: 'absolute',
+                          left: 1,
+                          top: 17 + this.panTopButton.y._value,
+                          width: this.getEventItemWidth(false) - 15,
+                          borderWidth: 1,
+                          borderColor: 'grey',
+                          backgroundColor: '#00000022',
+                          borderRadius: 3,
+                          height: this.heightAnim,
+                          zIndex: 1000,
+                        }}
+                      >
+                        <Animated.View
+                          style={{
+                            position: 'absolute',
+                            top: -8,
+                            width: 50,
+                            alignSelf: 'center',
+                            backgroundColor: 'grey',
+                            borderRadius: 8,
+                            padding: 10,
+                          }}
+                          {...this.panTopButtonResponder.panHandlers}
+                        />
+                        <Animated.View
+                          style={{
+                            position: 'absolute',
+                            bottom: -8,
+                            width: 50,
+                            alignSelf: 'center',
+                            backgroundColor: 'grey',
+                            borderRadius: 8,
+                            padding: 10,
+                          }}
+                          {...this.panBottomButtonResponder.panHandlers}
+                        />
+                      </Animated.View>
+                    </TouchableWithoutFeedback>
+                  )}
+                </View>
+              </TouchableWithoutFeedback>
+            );
+          })}
         </View>
       </View>
     );
@@ -521,6 +648,10 @@ Events.propTypes = {
   showNowLine: PropTypes.bool,
   nowLineColor: PropTypes.string,
   onDragEvent: PropTypes.func,
+  minHour: PropTypes.number,
+  maxHour: PropTypes.number,
+  onSelecting: PropTypes.func,
+  disabledRanges: PropTypes.arrayOf(PropTypes.arrayOf(DisabledRange.propTypes.event)),
 };
 
 export default Events;

@@ -13,7 +13,9 @@ import {
   StatusBar,
   Alert,
   ActivityIndicator,
+  PermissionsAndroid,
 } from 'react-native';
+import moment from 'moment';
 
 import WeekView, { createFixedWeekDate, addLocale } from 'react-native-week-view';
 
@@ -30,42 +32,61 @@ const sampleEvents = [
   {
     id: 1,
     description: 'Event 1',
-    startDate: generateDates(0),
-    endDate: generateDates(2),
+    startDate: moment().startOf('day').add(1, 'day').add(10, 'hours').add(0, 'minutes').toDate(),
+    endDate: moment().startOf('day').add(1, 'day').add(11, 'hours').add(15, 'minutes').toDate(),
     color: 'blue',
   },
   {
     id: 2,
     description: 'Event 2',
-    startDate: generateDates(1),
-    endDate: generateDates(4),
+    startDate: moment().startOf('day').add(1, 'day').add(12, 'hours').add(45, 'minutes').toDate(),
+    endDate: moment().startOf('day').add(1, 'day').add(13, 'hours').add(30, 'minutes').toDate(),
     color: 'red',
   },
   {
     id: 3,
     description: 'Event 3',
-    startDate: generateDates(-5),
-    endDate: generateDates(-3),
+    startDate: moment().startOf('day').add(1, 'day').add(8, 'hours').add(0, 'minutes').toDate(),
+    endDate: moment().startOf('day').add(1, 'day').add(9, 'hours').add(0, 'minutes').toDate(),
     color: 'green',
   },
 ];
 
-const sampleFixedEvents = [
-  {
-    id: 1,
-    description: 'Event 1',
-    startDate: createFixedWeekDate('Monday', 12),
-    endDate: createFixedWeekDate(1, 14),
-    color: 'blue',
-  },
-  {
-    id: 2,
-    description: 'Event 2',
-    startDate: createFixedWeekDate('wed', 16),
-    endDate: createFixedWeekDate(3, 17, 30),
-    color: 'red',
-  },
-];
+const _disabledDates = [
+  [
+    {
+      id: 1,
+      startDate: moment().subtract(1, 'day').startOf('day').add(0, 'hours').add(0, 'minutes').toDate(),
+      endDate: moment().subtract(1, 'day').startOf('day').add(9, 'hours').add(0, 'minutes').toDate(),
+      color: 'lightgrey',
+    },
+    {
+      id: 2,
+      startDate: moment().subtract(1, 'day').startOf('day').add(14, 'hours').add(0, 'minutes').toDate(),
+      endDate: moment().subtract(1, 'day').startOf('day').add(23, 'hours').add(0, 'minutes').toDate(),
+      color: 'lightgrey',
+    }
+  ],
+  [
+    {
+      id: 3,
+      startDate: moment().subtract(1, 'day').startOf('day').add(14, 'hours').add(0, 'minutes').toDate(),
+      endDate: moment().subtract(1, 'day').startOf('day').add(16, 'hours').add(0, 'minutes').toDate(),
+      color: 'lightgrey',
+    }
+  ],
+  [],
+  [],
+  [],
+  [],
+  [{
+    id: 4,
+    startDate: moment().subtract(1, 'day').startOf('day').add(19, 'hours').add(0, 'minutes').toDate(),
+    endDate: moment().subtract(1, 'day').startOf('day').add(23, 'hours').add(0, 'minutes').toDate(),
+    color: 'lightgrey',
+  }],
+]
+
 
 addLocale('es', {
   months: [
@@ -118,9 +139,14 @@ const MyRefreshComponent = ({ style }) => (
 
 class App extends React.Component {
   state = {
-    events: showFixedComponent ? sampleFixedEvents : sampleEvents,
+    events: sampleEvents,
     selectedDate: new Date(),
+    disabledDates: _disabledDates
   };
+
+  componentDidMount() {
+
+  }
 
   onEventPress = ({ id, color, startDate, endDate }) => {
     Alert.alert(
@@ -131,29 +157,38 @@ class App extends React.Component {
 
   onGridClick = (event, startHour, date) => {
     const dateStr = date.toISOString().split('T')[0];
-    Alert.alert(`Date: ${dateStr}\nStart hour: ${startHour}`);
+    /* Alert.alert(`Date: ${dateStr}\nStart hour: ${startHour}`); */
   };
 
   onDragEvent = (event, newStartDate, newEndDate) => {
+    /* console.log('STATE EVENT', moment(this.state.events.filter(e => e.id === event.id)[0].startDate).format('DD HH:mm'))
+    console.log('STATE CHANG', moment(newStartDate).format('DD HH:mm'))
+    console.log('=====================================================================') */
     // Here you should update the event in your DB with the new date and hour
+    const newEvents = this.state.events.filter(e => e.id !== event.id).slice()
+    newEvents.push({
+      ...event,
+      startDate: newStartDate,
+      endDate: newEndDate,
+    })
     this.setState({
-      events: [
-        ...this.state.events.filter(e => e.id !== event.id),
-        {
-          ...event,
-          startDate: newStartDate,
-          endDate: newEndDate,
-        },
-      ],
+      events: newEvents,
     });
   };
 
   onTimeIntervalSelected = (startTime, endTime) => {
-    Alert.alert(`start: ${startTime}`, `end: ${endTime}`);
+    console.log(`start: ${startTime}`, `end: ${endTime}`);
   };
 
+  handleOnSelecting = (start, end) => {
+    if (moment(start).isBefore(moment(start).startOf('day').add(9, 'hour'))) {
+      return false
+    }
+    return true
+  }
+
   render() {
-    const {events, selectedDate} = this.state;
+    const { events, selectedDate } = this.state;
     return (
       <>
         <StatusBar barStyle="dark-content" />
@@ -164,7 +199,7 @@ class App extends React.Component {
             }}
             events={events}
             selectedDate={selectedDate}
-            numberOfDays={7}
+            numberOfDays={3}
             onEventPress={this.onEventPress}
             onGridClick={this.onGridClick}
             headerStyle={styles.header}
@@ -173,19 +208,23 @@ class App extends React.Component {
             hourTextStyle={styles.hourText}
             eventContainerStyle={styles.eventContainer}
             formatDateHeader={showFixedComponent ? 'ddd' : 'ddd DD'}
-            hoursInDisplay={12}
+            hoursInDisplay={8}
             timeStep={60}
             startHour={8}
             fixedHorizontally={showFixedComponent}
             showTitle={!showFixedComponent}
             showNowLine
-            onDragEvent={this.onDragEvent}
+            /* onDragEvent={this.onDragEvent} */
             isRefreshing={false}
             RefreshComponent={MyRefreshComponent}
             formatTimeLabel={'HH:mm'}
             locale={'es'}
             onTimeIntervalSelected={this.onTimeIntervalSelected}
             showClickedSlot
+            minHour={8}
+            maxHour={22}
+            onSelecting={this.handleOnSelecting}
+            disabledRanges={this.state.disabledDates}
           />
         </SafeAreaView>
       </>

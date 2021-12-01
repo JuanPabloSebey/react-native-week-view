@@ -24,8 +24,9 @@ import {
   setLocale,
   CONTAINER_WIDTH,
 } from '../utils';
+import DisabledRange from '../DisabledRange/DisabledRange';
 
-const MINUTES_IN_DAY = 60 * 24;
+/* const MINUTES_IN_DAY = 60 * 24; */
 
 export default class WeekView extends Component {
   constructor(props) {
@@ -95,10 +96,10 @@ export default class WeekView extends Component {
     this.eventsGridScrollX.removeAllListeners();
   }
 
-  calculateTimes = memoizeOne((minutesStep, formatTimeLabel) => {
+  calculateTimes = memoizeOne((minutesStep, formatTimeLabel, maxHour, minHour) => {
     const times = [];
-    const startOfDay = moment().startOf('day');
-    for (let timer = 0; timer < MINUTES_IN_DAY; timer += minutesStep) {
+    const startOfDay = moment().startOf('day').add(minHour, 'hours');
+    for (let timer = 0; timer < (maxHour - minHour) * 60; timer += minutesStep) {
       const time = startOfDay.clone().minutes(timer);
       times.push(time.format(formatTimeLabel));
     }
@@ -395,17 +396,27 @@ export default class WeekView extends Component {
       onDragEvent,
       isRefreshing,
       RefreshComponent,
+      minHour,
+      maxHour,
+      disabledRanges,
     } = this.props;
     const { currentMoment, initialDates } = this.state;
-    const times = this.calculateTimes(timeStep, formatTimeLabel);
+    const times = this.calculateTimes(timeStep, formatTimeLabel, maxHour, minHour);
     const eventsByDate = this.sortEventsByDate(events);
     const horizontalInverted =
       (prependMostRecent && !rightToLeft) ||
       (!prependMostRecent && rightToLeft);
+
     const handleIntervalSelection = (startTime, endTime) => {
-      this.setState({ topSelectedIndex: startTime, bottomSelectedIndex: endTime });
+
       onTimeIntervalSelected(startTime, endTime);
     };
+
+    const handleIntervalChange = (startIndex, endIndex) => {
+      this.setState({ topSelectedIndex: startIndex, bottomSelectedIndex: endIndex });
+    };
+
+
 
     return (
       <View style={styles.container}>
@@ -463,6 +474,8 @@ export default class WeekView extends Component {
               hoursInDisplay={hoursInDisplay}
               timeStep={timeStep}
               interval={{ start: this.state.topSelectedIndex, end: this.state.bottomSelectedIndex }}
+              minHour={minHour}
+              maxHour={maxHour}
             />
             <VirtualizedList
               data={initialDates}
@@ -495,7 +508,12 @@ export default class WeekView extends Component {
                     nowLineColor={nowLineColor}
                     showClickedSlot={showClickedSlot}
                     onTimeIntervalSelected={handleIntervalSelection}
+                    onTimeIntervalChanged={handleIntervalChange}
                     onDragEvent={onDragEvent}
+                    minHour={minHour}
+                    maxHour={maxHour}
+                    onSelecting={this.props.onSelecting}
+                    disabledRanges={disabledRanges}
                   />
                 );
               }}
@@ -561,6 +579,10 @@ WeekView.propTypes = {
   onDragEvent: PropTypes.func,
   isRefreshing: PropTypes.bool,
   RefreshComponent: PropTypes.elementType,
+  minHour: PropTypes.number,
+  maxHOur: PropTypes.number,
+  onSelecting: PropTypes.func,
+  disabledRanges: Events.propTypes.disabledRanges,
 };
 
 WeekView.defaultProps = {
@@ -575,4 +597,7 @@ WeekView.defaultProps = {
   rightToLeft: false,
   prependMostRecent: false,
   RefreshComponent: ActivityIndicator,
+  minHour: 0,
+  maxHour: 24,
+  disabledRanges: [[], [], [], [], [], [], []]
 };
