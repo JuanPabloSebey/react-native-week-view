@@ -399,6 +399,7 @@ export default class WeekView extends Component {
       minHour,
       maxHour,
       disabledRanges,
+      selection,
     } = this.props;
     const { currentMoment, initialDates } = this.state;
     const times = this.calculateTimes(timeStep, formatTimeLabel, maxHour, minHour);
@@ -514,6 +515,7 @@ export default class WeekView extends Component {
                     maxHour={maxHour}
                     onSelecting={this.props.onSelecting}
                     disabledRanges={disabledRanges}
+                    selection={selection}
                   />
                 );
               }}
@@ -583,6 +585,7 @@ WeekView.propTypes = {
   maxHOur: PropTypes.number,
   onSelecting: PropTypes.func,
   disabledRanges: Events.propTypes.disabledRanges,
+  selection: Events.propTypes.selection,
 };
 
 WeekView.defaultProps = {
