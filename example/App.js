@@ -87,6 +87,12 @@ const _disabledDates = [
   }],
 ]
 
+const selection = {
+  id: 4,
+  startDate: moment().subtract(1, 'day').startOf('day').add(12, 'hours').add(14, 'minutes').toDate(),
+  endDate: moment().subtract(1, 'day').startOf('day').add(13, 'hours').add(21, 'minutes').toDate(),
+  color: 'lightgrey',
+}
 
 addLocale('es', {
   months: [
@@ -225,6 +231,7 @@ class App extends React.Component {
             maxHour={22}
             onSelecting={this.handleOnSelecting}
             disabledRanges={this.state.disabledDates}
+            selection={selection}
           />
         </SafeAreaView>
       </>
