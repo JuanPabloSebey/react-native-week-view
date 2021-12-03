@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import { CONTAINER_WIDTH, CONTENT_OFFSET } from '../utils';
 
-const GREY_COLOR = '#E9EDF0';
+const GREY_COLOR = '#707070';
 
 const styles = StyleSheet.create({
   container: {
