@@ -167,20 +167,41 @@ class Events extends PureComponent {
       this.props.timeStep,
     );
 
-    this.state = {
-      dayIndex: null,
-      topTimeIndex: props.minHour * 4,
-      bottomTimeIndex: props.minHour * 4 + 4,
-    };
+    if (this.props.selection) {
+      const _start = moment(this.props.selection.startDate)
+      const _end = moment(this.props.selection.endDate)
+      const dayIndex = moment(this.props.initialDate).diff(_start, 'days')
 
-    this.height = React.createRef();
-    this.height.current = this.offset;
-    this.heightAnim = new Animated.Value(this.height.current);
+      const _topTimeIndex = _start.hours() * 4 + _start.minutes() * 4 / 60
+      const _bottomTimeIndex = _end.hours() * 4 + _end.minutes() * 4 / 60
+      this.state = {
+        dayIndex: dayIndex,
+        topTimeIndex: _topTimeIndex,
+        bottomTimeIndex: _bottomTimeIndex,
+      };
 
-    this.panTopButton = new Animated.ValueXY();
-    this.panBottomButton = new Animated.ValueXY();
+      this.height = React.createRef();
+      this.height.current = (_bottomTimeIndex - _topTimeIndex) / 4 * this.offset;
+      this.heightAnim = new Animated.Value(this.height.current);
 
-    this.topButtonPosition = new Animated.Value(0);
+      this.panTopButton = new Animated.ValueXY({ x: 0, y: (_topTimeIndex - this.props.minHour * 4) / 4 * this.offset });
+      this.panBottomButton = new Animated.ValueXY();
+
+      this.topButtonPosition = new Animated.Value((_topTimeIndex - this.props.minHour * 4) / 4 * this.offset);
+      this.handleTimeIntervalChanged()
+    } else {
+      this.height = React.createRef();
+      this.height.current = this.offset;
+      this.heightAnim = new Animated.Value(this.height.current);
+
+      this.panTopButton = new Animated.ValueXY();
+      this.panBottomButton = new Animated.ValueXY();
+
+      this.topButtonPosition = new Animated.Value(0);
+    }
+
+
+
 
     this.panTopButtonResponder = PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -329,7 +350,6 @@ class Events extends PureComponent {
 
   handleTimeIntervalSelected = () => {
 
-    const { initialDate } = this.props;
     this.props.onTimeIntervalSelected &&
       this.props.onTimeIntervalSelected(
         this.indexToDate(this.state.topTimeIndex),
@@ -439,7 +459,7 @@ class Events extends PureComponent {
 
     const _start = this.indexToDate(hour * 4, dayIndex)
     const _end = this.indexToDate(hour * 4 + 4, dayIndex)
-    console.log('IS INVALID', this.isInvalidRange(_start, _end), _start, _end, locationY)
+
     if (this.isInvalidRange(_start, _end)) {
       return
     }
@@ -652,6 +672,7 @@ Events.propTypes = {
   maxHour: PropTypes.number,
   onSelecting: PropTypes.func,
   disabledRanges: PropTypes.arrayOf(PropTypes.arrayOf(DisabledRange.propTypes.event)),
+  selection: Event.propTypes.event,
 };
 
 export default Events;

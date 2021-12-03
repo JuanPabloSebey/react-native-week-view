@@ -15,6 +15,7 @@
   "dependencies": {
     "react": "17.0.1",
     "react-native": "0.64.2",
+    "moment-range": "^4.0.2",
     "react-native-week-view": "file:.."
   },
   "devDependencies": {
