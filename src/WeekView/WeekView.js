@@ -582,7 +582,7 @@ WeekView.propTypes = {
   isRefreshing: PropTypes.bool,
   RefreshComponent: PropTypes.elementType,
   minHour: PropTypes.number,
-  maxHOur: PropTypes.number,
+  maxHour: PropTypes.number,
   onSelecting: PropTypes.func,
   disabledRanges: Events.propTypes.disabledRanges,
   selection: Events.propTypes.selection,

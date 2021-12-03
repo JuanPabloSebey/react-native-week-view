@@ -242,25 +242,27 @@ class App extends React.Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: '#303030',
   },
   header: {
-    backgroundColor: '#4286f4',
-    borderColor: '#fff',
+    backgroundColor: '#606060',
+    borderColor: '#606060',
   },
   headerText: {
-    color: 'white',
+    color: '#C0C0C0',
+    fontSize: 10,
+    marginTop: 1,
   },
   headerTextDate: {
-    color: '#333333',
-    marginVertical: 8,
+    color: 'white',
+    fontSize: 18,
   },
   hourText: {
-    color: 'black',
+    color: '#C0C0C0',
   },
   eventContainer: {
-    borderWidth: 1,
-    borderColor: 'black',
+    borderWidth: 0,
+    borderRadius: 1,
   },
 });
 
