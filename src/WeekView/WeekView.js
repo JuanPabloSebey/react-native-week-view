@@ -66,6 +66,7 @@ export default class WeekView extends Component {
   }
 
   componentDidUpdate(prevProps) {
+
     if (this.props.locale !== prevProps.locale) {
       setLocale(this.props.locale);
     }
@@ -238,7 +239,6 @@ export default class WeekView extends Component {
     const newPage = Math.round((position / innerWidth) * initialDates.length);
     const movedPages = newPage - this.currentPageIndex;
     this.currentPageIndex = newPage;
-
     if (movedPages === 0) {
       return;
     }
@@ -416,8 +416,6 @@ export default class WeekView extends Component {
     const handleIntervalChange = (startIndex, endIndex) => {
       this.setState({ topSelectedIndex: startIndex, bottomSelectedIndex: endIndex });
     };
-
-
 
     return (
       <View style={styles.container}>

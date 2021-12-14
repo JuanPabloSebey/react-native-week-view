@@ -161,7 +161,6 @@ const getEventsWithPosition = (
 class Events extends PureComponent {
   constructor(props) {
     super(props);
-
     this.offset = getTimeLabelHeight(
       this.props.hoursInDisplay,
       this.props.timeStep,
@@ -171,6 +170,7 @@ class Events extends PureComponent {
       const _start = moment(this.props.selection.startDate)
       const _end = moment(this.props.selection.endDate)
       const dayIndex = moment(this.props.initialDate).diff(_start, 'days')
+
 
       const _topTimeIndex = _start.hours() * 4 + _start.minutes() * 4 / 60
       const _bottomTimeIndex = _end.hours() * 4 + _end.minutes() * 4 / 60
@@ -306,6 +306,13 @@ class Events extends PureComponent {
   }
 
   componentDidUpdate = (_, prevState) => {
+    if (!(this.props.selection &&
+      moment(this.props.selection.startDate).isAfter(moment(this.props.initialDate).startOf('day')) &&
+      moment(this.props.selection.endDate).isBefore(moment(this.props.initialDate).add(this.props.numberOfDays - 1, 'days').endOf('day'))
+    )) {
+
+      this.setState({ dayIndex: null })
+    }
     if (
       this.state.topTimeIndex !== prevState.topTimeIndex ||
       this.state.bottomTimeIndex !== prevState.bottomTimeIndex
@@ -348,12 +355,12 @@ class Events extends PureComponent {
       .toDate()
   }
 
-  handleTimeIntervalSelected = () => {
+  handleTimeIntervalSelected = (startIndex, endIndex, dayIndex) => {
 
     this.props.onTimeIntervalSelected &&
       this.props.onTimeIntervalSelected(
-        this.indexToDate(this.state.topTimeIndex),
-        this.indexToDate(this.state.bottomTimeIndex)
+        this.indexToDate(startIndex || this.state.topTimeIndex, dayIndex || this.state.dayIndex),
+        this.indexToDate(endIndex || this.state.bottomTimeIndex, dayIndex || this.state.dayIndex)
       )
   }
 
@@ -474,7 +481,7 @@ class Events extends PureComponent {
     this.heightAnim.setValue(this.offset);
     this.panTopButton.y.setValue((hour - this.props.minHour) * this.offset);
     this.height.current = this.offset;
-
+    this.handleTimeIntervalSelected(4 * hour, 4 * (hour + 1), dayIndex)
     callback(event, hour, date);
   };
 
@@ -597,7 +604,7 @@ class Events extends PureComponent {
                       onDrag={onDragEvent && this.onDragEvent}
                     />
                   ))}
-                  {showClickedSlot && this.state.dayIndex === dayIndex && (
+                  {showClickedSlot && this.state?.dayIndex === dayIndex && (
                     <TouchableWithoutFeedback onPress={() => { }}>
                       <Animated.View
                         style={{
@@ -672,7 +679,7 @@ Events.propTypes = {
   maxHour: PropTypes.number,
   onSelecting: PropTypes.func,
   disabledRanges: PropTypes.arrayOf(PropTypes.arrayOf(DisabledRange.propTypes.event)),
-  selection: Event.propTypes.event,
+  selection: PropTypes.object,
 };
 
 export default Events;

@@ -147,7 +147,8 @@ class App extends React.Component {
   state = {
     events: sampleEvents,
     selectedDate: new Date(),
-    disabledDates: _disabledDates
+    disabledDates: _disabledDates,
+    actualSelection: selection
   };
 
   componentDidMount() {
@@ -183,14 +184,25 @@ class App extends React.Component {
   };
 
   onTimeIntervalSelected = (startTime, endTime) => {
-    console.log(`start: ${startTime}`, `end: ${endTime}`);
+    /* console.log(`!"#!"# asd"!#  start: ${startTime}`, `end: ${endTime}`); */
+    this.setState({
+      actualSelection: { ...this.state.actualSelection, startDate: startTime, endDate: endTime },
+    });
   };
 
   handleOnSelecting = (start, end) => {
-    if (moment(start).isBefore(moment(start).startOf('day').add(9, 'hour'))) {
+    /* if (moment(start).isBefore(moment(start).startOf('day').add(9, 'hour'))) {
       return false
-    }
+    } */
     return true
+  }
+
+  handleSwipePrev = (date) => {
+    this.setState({ selectedDate: date })
+  }
+
+  handleSwipeNext = (date) => {
+    this.setState({ selectedDate: date })
   }
 
   render() {
@@ -231,7 +243,9 @@ class App extends React.Component {
             maxHour={22}
             onSelecting={this.handleOnSelecting}
             disabledRanges={this.state.disabledDates}
-            selection={selection}
+            selection={this.state.actualSelection}
+            onSwipeNext={this.handleSwipeNext}
+            onSwipePrev={this.handleSwipePrev}
           />
         </SafeAreaView>
       </>
