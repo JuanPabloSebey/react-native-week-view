@@ -171,13 +171,14 @@ class Events extends PureComponent {
       const _end = moment(this.props.selection.endDate)
       const dayIndex = moment(this.props.initialDate).diff(_start, 'days')
 
-
       const _topTimeIndex = _start.hours() * 4 + _start.minutes() * 4 / 60
       const _bottomTimeIndex = _end.hours() * 4 + _end.minutes() * 4 / 60
       this.state = {
         dayIndex: dayIndex,
         topTimeIndex: _topTimeIndex,
         bottomTimeIndex: _bottomTimeIndex,
+        panButtonSize: 10,
+        clickedSlotBorder: 'solid',
       };
 
       this.height = React.createRef();
@@ -212,6 +213,10 @@ class Events extends PureComponent {
           y:
             ((this.state.topTimeIndex - this.props.minHour * 4) * this.offset) /
             4,
+        });
+        this.setState({
+          panButtonSize: 6,
+          clickedSlotBorder: 'dashed',
         });
       },
       onPanResponderMove: (_, gestureState) => {
@@ -249,6 +254,10 @@ class Events extends PureComponent {
           (this.offset / 4);
         this.panTopButton.flattenOffset();
         this.handleTimeIntervalSelected();
+        this.setState({
+          panButtonSize: 10,
+          clickedSlotBorder: 'solid',
+        });
       },
       onPanResponderTerminationRequest: () => false,
     });
@@ -260,6 +269,10 @@ class Events extends PureComponent {
         this.panBottomButton.setOffset({
           x: 0,
           y: this.panBottomButton.y._value,
+        });
+        this.setState({
+          panButtonSize: 6,
+          clickedSlotBorder: 'dashed',
         });
       },
       onPanResponderMove: (_, gestureState) => {
@@ -300,6 +313,10 @@ class Events extends PureComponent {
           (this.offset / 4);
         this.panBottomButton.flattenOffset();
         this.handleTimeIntervalSelected();
+        this.setState({
+          panButtonSize: 10,
+          clickedSlotBorder: 'solid',
+        });
       },
       onPanResponderTerminationRequest: () => false,
     });
@@ -612,10 +629,11 @@ class Events extends PureComponent {
                           left: 1,
                           top: 17 + this.panTopButton.y._value,
                           width: this.getEventItemWidth(false) - 15,
-                          borderWidth: 1,
-                          borderColor: 'grey',
-                          backgroundColor: '#00000022',
-                          borderRadius: 3,
+                          borderWidth: 2,
+                          borderColor: '#F8D33C',
+                          backgroundColor: '#FFFFFF22',
+                          borderRadius: 2,
+                          borderStyle: this.state.clickedSlotBorder,
                           height: this.heightAnim,
                           zIndex: 1000,
                         }}
@@ -623,24 +641,28 @@ class Events extends PureComponent {
                         <Animated.View
                           style={{
                             position: 'absolute',
-                            top: -8,
-                            width: 50,
-                            alignSelf: 'center',
-                            backgroundColor: 'grey',
-                            borderRadius: 8,
-                            padding: 10,
+                            top: -4,
+                            left: -4,
+                            borderTopLeftRadius: 5,
+                            alignSelf: 'flex-start',
+                            backgroundColor: '#F8D33C',
+                            borderRadius: 2,
+                            padding: this.state.panButtonSize,
+                            zIndex: 1000,
                           }}
                           {...this.panTopButtonResponder.panHandlers}
                         />
                         <Animated.View
                           style={{
                             position: 'absolute',
-                            bottom: -8,
-                            width: 50,
-                            alignSelf: 'center',
-                            backgroundColor: 'grey',
-                            borderRadius: 8,
-                            padding: 10,
+                            bottom: -4,
+                            right: -4,
+                            borderBottomEndRadius: 5,
+                            alignSelf: 'flex-end',
+                            backgroundColor: '#F8D33C',
+                            borderRadius: 2,
+                            padding: this.state.panButtonSize,
+                            zIndex: 1000,
                           }}
                           {...this.panBottomButtonResponder.panHandlers}
                         />
