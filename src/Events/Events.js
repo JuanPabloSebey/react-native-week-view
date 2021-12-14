@@ -166,6 +166,11 @@ class Events extends PureComponent {
       this.props.timeStep,
     );
 
+    this.state = {
+      panButtonSize: 10,
+      clickedSlotBorder: 'solid',
+    };
+
     if (this.props.selection) {
       const _start = moment(this.props.selection.startDate)
       const _end = moment(this.props.selection.endDate)
@@ -174,11 +179,10 @@ class Events extends PureComponent {
       const _topTimeIndex = _start.hours() * 4 + _start.minutes() * 4 / 60
       const _bottomTimeIndex = _end.hours() * 4 + _end.minutes() * 4 / 60
       this.state = {
+        ...this.state,
         dayIndex: dayIndex,
         topTimeIndex: _topTimeIndex,
         bottomTimeIndex: _bottomTimeIndex,
-        panButtonSize: 10,
-        clickedSlotBorder: 'solid',
       };
 
       this.height = React.createRef();
@@ -323,17 +327,15 @@ class Events extends PureComponent {
   }
 
   componentDidUpdate = (_, prevState) => {
-    if (!(this.props.selection &&
+    if (!(this.props?.selection &&
       moment(this.props.selection.startDate).isAfter(moment(this.props.initialDate).startOf('day')) &&
       moment(this.props.selection.endDate).isBefore(moment(this.props.initialDate).add(this.props.numberOfDays - 1, 'days').endOf('day'))
     )) {
 
       this.setState({ dayIndex: null })
     }
-    if (
-      this.state.topTimeIndex !== prevState.topTimeIndex ||
-      this.state.bottomTimeIndex !== prevState.bottomTimeIndex
-    ) {
+    if (this.state && prevState && (this.state.topTimeIndex !== prevState.topTimeIndex ||
+      this.state.bottomTimeIndex !== prevState.bottomTimeIndex)) {
       this.handleTimeIntervalChanged && this.handleTimeIntervalChanged();
     }
   };
