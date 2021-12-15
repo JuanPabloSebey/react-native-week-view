@@ -172,17 +172,11 @@ class Events extends PureComponent {
     };
 
     if (this.props.selection) {
-      const _start = moment(this.props.selection.startDate)
-      const _end = moment(this.props.selection.endDate)
-      const dayIndex = moment(this.props.initialDate).diff(_start, 'days')
+      const selectionData = this.selectionToIndex(this.props.selection, this.props.initialDate)
 
-      const _topTimeIndex = _start.hours() * 4 + _start.minutes() * 4 / 60
-      const _bottomTimeIndex = _end.hours() * 4 + _end.minutes() * 4 / 60
       this.state = {
         ...this.state,
-        dayIndex: dayIndex,
-        topTimeIndex: _topTimeIndex,
-        bottomTimeIndex: _bottomTimeIndex,
+        ...selectionData
       };
 
       this.height = React.createRef();
@@ -193,7 +187,7 @@ class Events extends PureComponent {
       this.panBottomButton = new Animated.ValueXY();
 
       this.topButtonPosition = new Animated.Value((_topTimeIndex - this.props.minHour * 4) / 4 * this.offset);
-      this.handleTimeIntervalChanged()
+      this.handleTimeIntervalChanged();
     } else {
       this.height = React.createRef();
       this.height.current = this.offset;
@@ -204,8 +198,6 @@ class Events extends PureComponent {
 
       this.topButtonPosition = new Animated.Value(0);
     }
-
-
 
 
     this.panTopButtonResponder = PanResponder.create({
@@ -326,18 +318,51 @@ class Events extends PureComponent {
     });
   }
 
-  componentDidUpdate = (_, prevState) => {
+
+  selectionToIndex = (selection, initialDate) => {
+    const _start = moment(selection.startDate)
+    const _end = moment(selection.endDate)
+    console.log('dates', _start.format('DD'), _end.format('DD'), moment(initialDate).format('DD'))
+    dayIndex = -moment(initialDate).diff(_start, 'days')
+
+    _topTimeIndex = _start.hours() * 4 + _start.minutes() * 4 / 60
+    _bottomTimeIndex = _end.hours() * 4 + _end.minutes() * 4 / 60
+    return { dayIndex, bottomTimeIndex: _bottomTimeIndex, topTimeIndex: _topTimeIndex }
+  }
+
+
+  componentDidUpdate = (prevProps, prevState) => {
     if (!(this.props?.selection &&
       moment(this.props.selection.startDate).isAfter(moment(this.props.initialDate).startOf('day')) &&
       moment(this.props.selection.endDate).isBefore(moment(this.props.initialDate).add(this.props.numberOfDays - 1, 'days').endOf('day'))
     )) {
 
       this.setState({ dayIndex: null })
-    }
-    if (this.state && prevState && (this.state.topTimeIndex !== prevState.topTimeIndex ||
-      this.state.bottomTimeIndex !== prevState.bottomTimeIndex)) {
-      this.handleTimeIntervalChanged && this.handleTimeIntervalChanged();
-    }
+    } else if (this.props?.selection && this.props?.initialDate && (
+      prevProps.selection !== this.props.selection
+    )) {
+      const selectionData = this.selectionToIndex(this.props.selection, this.props.initialDate);
+      if (prevState?.dayIndex !== selectionData.dayIndex ||
+        prevState?.bottomTimeIndex !== selectionData.bottomTimeIndex ||
+        prevState?.topTimeIndex !== selectionData.topTimeIndex) {
+
+        this.height.current = (selectionData.bottomTimeIndex - selectionData.topTimeIndex) / 4 * this.offset;
+        this.heightAnim.setValue(this.height.current);
+
+        this.panTopButton.setValue({ x: 0, y: (selectionData.topTimeIndex - this.props.minHour * 4) / 4 * this.offset });
+
+        this.topButtonPosition.setValue((selectionData.topTimeIndex - this.props.minHour * 4) / 4 * this.offset);
+        this.setState({ ...selectionData })
+        this.handleTimeIntervalChanged && this.handleTimeIntervalChanged();
+      }
+    } else
+
+      if (this.state && prevState && (
+        this.state.topTimeIndex !== prevState.topTimeIndex ||
+        this.state.bottomTimeIndex !== prevState.bottomTimeIndex
+      )) {
+        this.handleTimeIntervalChanged && this.handleTimeIntervalChanged();
+      }
   };
 
   isInvalidRange = (start, end) => {
