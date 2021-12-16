@@ -51,6 +51,7 @@ export default class WeekView extends Component {
       initialDates,
       topSelectedIndex: -1,
       bottomSelectedIndex: -1,
+      scrollEnabled: true,
     };
 
     setLocale(props.locale);
@@ -401,7 +402,7 @@ export default class WeekView extends Component {
       disabledRanges,
       selection,
     } = this.props;
-    const { currentMoment, initialDates } = this.state;
+    const { currentMoment, initialDates, scrollEnabled } = this.state;
     const times = this.calculateTimes(timeStep, formatTimeLabel, maxHour, minHour);
     const eventsByDate = this.sortEventsByDate(events);
     const horizontalInverted =
@@ -409,12 +410,12 @@ export default class WeekView extends Component {
       (!prependMostRecent && rightToLeft);
 
     const handleIntervalSelection = (startTime, endTime) => {
-
+      this.setState({ scrollEnabled: true });
       onTimeIntervalSelected(startTime, endTime);
     };
 
     const handleIntervalChange = (startIndex, endIndex) => {
-      this.setState({ topSelectedIndex: startIndex, bottomSelectedIndex: endIndex });
+      this.setState({ topSelectedIndex: startIndex, bottomSelectedIndex: endIndex, scrollEnabled: false });
     };
 
     return (
@@ -465,7 +466,8 @@ export default class WeekView extends Component {
           onStartShouldSetResponderCapture={() => false}
           onMoveShouldSetResponderCapture={() => false}
           onResponderTerminationRequest={() => false}
-          ref={this.verticalAgendaRef}>
+          ref={this.verticalAgendaRef}
+          scrollEnabled={scrollEnabled}>
           <View style={styles.scrollViewContent}>
             <Times
               times={times}

@@ -322,7 +322,6 @@ class Events extends PureComponent {
   selectionToIndex = (selection, initialDate) => {
     const _start = moment(selection.startDate)
     const _end = moment(selection.endDate)
-    console.log('dates', _start.format('DD'), _end.format('DD'), moment(initialDate).format('DD'))
     dayIndex = -moment(initialDate).diff(_start, 'days')
 
     _topTimeIndex = _start.hours() * 4 + _start.minutes() * 4 / 60
