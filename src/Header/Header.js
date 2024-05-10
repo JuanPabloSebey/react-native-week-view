@@ -119,8 +119,4 @@ WeekViewHeader.propTypes = {
   TodayComponent: PropTypes.elementType,
 };
 
-WeekViewHeader.defaultProps = {
-  formatDate: 'MMM D',
-};
-
 export default React.memo(WeekViewHeader);
