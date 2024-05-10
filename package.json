@@ -53,10 +53,13 @@
     "prettier": "^2.0.5"
   },
 <<<<<<< HEAD
+<<<<<<< HEAD
   "peerDependencies": {
     "react": "^16.8.0",
     "react-native": "^0.59.0"
   },
+=======
+>>>>>>> 687ee93 (Remove peerDependencies)
 =======
 >>>>>>> 687ee93 (Remove peerDependencies)
   "jest": {
