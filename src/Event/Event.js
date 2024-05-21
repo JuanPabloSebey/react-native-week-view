@@ -9,6 +9,7 @@ import Animated, {
   runOnJS,
   useDerivedValue,
 } from 'react-native-reanimated';
+import moment from 'moment';
 import styles, { circleStyles } from './Event.styles';
 import {
   EventPropType,
@@ -23,6 +24,7 @@ import {
   computeTop,
 } from '../pipeline/position';
 import { useVerticalDimensionContext } from '../utils/VerticalDimContext';
+import { overlappingWithDisabled } from '../pipeline/overlap';
 
 const DEFAULT_COLOR = 'red';
 const SIDES = ['bottom', 'top', 'left', 'right'];
@@ -34,12 +36,17 @@ const Circle = ({ side }) => (
   />
 );
 
-const Circles = ({ isEditing, editEventConfig, buildCircleGesture }) =>
-  isEditing
+const Circles = ({ isEditing, editEventConfig, buildCircleGesture, event }) => {
+  console.log('FROM CIRCLES');
+  console.log(event);
+  return isEditing
     ? SIDES.reduce((acc, side) => {
         if (editEventConfig[side]) {
           acc.push(
-            <GestureDetector key={side} gesture={buildCircleGesture(side)}>
+            <GestureDetector
+              key={side}
+              gesture={buildCircleGesture(side, event)}
+            >
               <Circle side={side} />
             </GestureDetector>,
           );
@@ -47,6 +54,7 @@ const Circles = ({ isEditing, editEventConfig, buildCircleGesture }) =>
         return acc;
       }, [])
     : [];
+};
 
 const DRAG_STATUS = {
   STATIC: 0,
@@ -72,6 +80,7 @@ const Event = ({
   editingEventId,
   editEventConfig,
   dragEventConfig,
+  disabledRanges,
 }) => {
   const dragAfterLongPress =
     (dragEventConfig && dragEventConfig.afterLongPressDuration) || 0;
@@ -81,7 +90,12 @@ const Event = ({
     !!onDrag && editingEventId == null && !event.disableDrag;
 
   const runGesturesOnJS = React.useContext(RunGesturesOnJSContext);
-  const { verticalResolution, beginAgendaAt } = useVerticalDimensionContext();
+  const {
+    verticalResolution,
+    beginAgendaAt,
+    timeLabelHeight,
+  } = useVerticalDimensionContext();
+  const local = useSharedValue(event);
 
   // Wrappers are needed due to RN-reanimated runOnJS behavior. See docs:
   // https://docs.swmansion.com/react-native-reanimated/docs/api/miscellaneous/runOnJS
@@ -246,21 +260,57 @@ const Event = ({
     longPressGesture,
     pressGesture,
   );
+  // console.log('_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_');
+  // console.log('_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_');
+  console.log('_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_');
+  console.log(JSON.stringify(event, null, 2));
+  // console.log(disabledRanges[moment(event.startDate).day()]);
+  console.log('_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_');
+  // console.log('_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_');
 
-  const buildCircleGesture = (side) =>
-    Gesture.Pan()
+  const buildCircleGesture = (side, localEvent) => {
+    console.log('evento arriba original', event);
+    console.log('evento arriba parametro', localEvent);
+    return Gesture.Pan()
       .runOnJS(runGesturesOnJS)
       .onUpdate((panEvt) => {
+        console.log('evento abajo original', event);
+        console.log('evento abajo parametro', localEvent);
         const { translationX, translationY } = panEvt;
+        const minStep = timeLabelHeight.value / 4;
+        const diff = Math.floor(translationY / minStep) * minStep;
+
         switch (side) {
           case 'top':
+            // console.log('%%%%%%%%TOP%%%%%%%%%%');
+            // console.log(disabledRanges);
+            // console.log(event);
+            // console.log(moment(boxStartTimestamp), moment(boxEndTimestamp));
+            // console.log(moment(local.value.startDate).day());
+            // console.log(disabledRanges[moment(localEvent.startDate).day()]);
+            overlappingWithDisabled(
+              diff,
+              resizeByEdit.bottom.value,
+              disabledRanges[moment(localEvent.startDate).day()],
+            );
             if (translationY < currentHeight.value) {
-              resizeByEdit.top.value = translationY;
+              resizeByEdit.top.value = diff;
             }
             break;
           case 'bottom':
+            console.log('%%%%%%%%BOTTOM%%%%%%%%%%');
+            console.log(event.startDate);
+            console.log(moment(event.startDate).day());
+            console.log(disabledRanges[moment(event.startDate).day()]);
+            overlappingWithDisabled(
+              diff,
+              resizeByEdit.bottom.value,
+              disabledRanges[moment(event.startDate).day()],
+            );
             if (translationY > -currentHeight.value) {
-              resizeByEdit.bottom.value = translationY;
+              if (currentHeight.value + diff >= minStep) {
+                resizeByEdit.bottom.value = diff;
+              }
             }
             break;
           case 'left':
@@ -315,6 +365,7 @@ const Event = ({
 
         runOnJS(onEditWrapper)(side, newPosition);
       });
+  };
 
   return (
     <GestureDetector gesture={composedGesture}>
@@ -341,6 +392,7 @@ const Event = ({
           </Text>
         )}
         <Circles
+          event={event}
           isEditing={isEditing}
           editEventConfig={editEventConfig}
           buildCircleGesture={buildCircleGesture}
@@ -366,8 +418,9 @@ Event.propTypes = {
   dragEventConfig: DragEventConfigPropType,
   onDrag: PropTypes.func,
   onEdit: PropTypes.func,
-  editingEventId: PropTypes.number,
+  editingEventId: PropTypes.string,
   editEventConfig: EditEventConfigPropType,
+  disabledRanges: PropTypes.array,
 };
 
 export default React.memo(Event);

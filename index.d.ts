@@ -4,7 +4,7 @@ import { Moment } from 'moment';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface WeekViewEvent extends Record<string, any> {
-  id: number;
+  id: string;
   description?: string;
   startDate: Date;
   endDate: Date;
@@ -43,7 +43,6 @@ export interface PageStartAtOptions {
   left?: number;
   weekday?: number;
 }
-
 
 export interface WeekViewProps {
   ref: React.MutableRefObject;
@@ -151,7 +150,7 @@ export interface WeekViewProps {
   /**
    * Which event is being edited.
    */
-  editingEvent?: number | string | null;
+  editingEvent?: string | null;
 
   /**
    * Callback when an event item is edited by dragging its borders.
@@ -249,6 +248,7 @@ export interface WeekViewProps {
   // Other props (patch RN bugs)
   prependMostRecent?: boolean;
   runOnJS?: boolean;
+  disabledRanges?: any;
 }
 
 declare const WeekView: React.ComponentType<WeekViewProps>;

@@ -520,6 +520,7 @@ export default class WeekView extends Component {
       disableVirtualization,
       runOnJS,
       onTimeScrolled,
+      disabledRanges,
     } = this.props;
     const {
       currentMoment,
@@ -664,6 +665,7 @@ export default class WeekView extends Component {
                           onGridClick={onGridClick}
                           onGridLongPress={onGridLongPress}
                           beginAgendaAt={beginAgendaAt}
+                          endAgendaAt={endAgendaAt}
                           EventComponent={EventComponent}
                           eventContainerStyle={eventContainerStyle}
                           eventTextStyle={eventTextStyle}
@@ -679,6 +681,7 @@ export default class WeekView extends Component {
                           editingEventId={editingEvent}
                           editEventConfig={editEventConfig}
                           dragEventConfig={dragEventConfig}
+                          disabledRanges={disabledRanges}
                         />
                       );
                     }}
@@ -706,7 +709,7 @@ WeekView.propTypes = {
   onEventLongPress: PropTypes.func,
   onGridClick: PropTypes.func,
   onGridLongPress: PropTypes.func,
-  editingEvent: PropTypes.number,
+  editingEvent: PropTypes.string,
   onEditEvent: PropTypes.func,
   editEventConfig: EditEventConfigPropType,
   dragEventConfig: DragEventConfigPropType,
@@ -751,6 +754,7 @@ WeekView.propTypes = {
   removeClippedSubviews: PropTypes.bool,
   disableVirtualization: PropTypes.bool,
   runOnJS: PropTypes.bool,
+  disabledRanges: Events.propTypes.disabledRanges,
 };
 
 WeekView.defaultProps = {

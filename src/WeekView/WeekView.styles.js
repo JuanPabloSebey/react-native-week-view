@@ -9,6 +9,7 @@ const styles = StyleSheet.create({
   },
   headerAndTitleContainer: {
     flexDirection: 'row',
+    height:50
   },
   loadingSpinner: {
     position: 'absolute',

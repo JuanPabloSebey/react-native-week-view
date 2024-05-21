@@ -23,7 +23,7 @@ const baseCircleStyle = {
   borderWidth: 1,
   borderRadius: circleDiameter,
   height: circleDiameter,
-  width: circleDiameter,
+  width: 40,
   backgroundColor: 'white',
 };
 

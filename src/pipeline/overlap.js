@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 /* eslint-disable max-classes-per-file */
 import { EVENT_KINDS, OVERLAP_METHOD } from '../utils/types';
 
@@ -60,7 +61,6 @@ class OverlappedEventsHandler {
 
   saveEventToLane = (eventWithMeta, eventIndex, laneIndex) => {
     this.lanes[laneIndex].addEvent(eventWithMeta, eventIndex);
-
     this.event2LaneIndex[eventIndex] = laneIndex;
   };
 
@@ -165,7 +165,7 @@ const addOverlappedToArray = (baseArr, overlappedArr) => {
   });
 };
 
-const resolveEventOverlaps = (events) => {
+export const resolveEventOverlaps = (events) => {
   let overlappedSoFar = [];
   let latestTimestamp = -1;
   const resolvedEvents = events.reduce((accumulated, eventWithMeta) => {
@@ -192,4 +192,25 @@ const resolveEventOverlaps = (events) => {
   return resolvedEvents;
 };
 
-export default resolveEventOverlaps;
+export const overlappingWithDisabled = (
+  eventTop,
+  eventBottom,
+  disabledRanges,
+) => {
+  // eslint-disable-next-line no-restricted-syntax
+  console.log('check overlap check overlap');
+  console.log('check overlap check overlap');
+  console.log('check overlap check overlap');
+  for (const range of disabledRanges) {
+    if (eventTop <= range.style.height && eventBottom >= range.style.top) {
+      console.log(
+        'Overlap',
+        eventTop,
+        eventBottom,
+        'to',
+        range.style.top,
+        range.style.height,
+      );
+    }
+  }
+};

@@ -1,3 +1,5 @@
+/* eslint-disable no-underscore-dangle */
+/* eslint-disable no-undef */
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import { View } from 'react-native';
@@ -23,8 +25,16 @@ import {
   useVerticalDimensionContext,
 } from '../utils/VerticalDimContext';
 
+import DisabledRange from '../DisabledRange/DisabledRange';
+
 import styles from './Events.styles';
-import resolveEventOverlaps from '../pipeline/overlap';
+import { resolveEventOverlaps } from '../pipeline/overlap';
+import {
+  computeHeight,
+  computeWidth,
+  computeLeft,
+  computeTop,
+} from '../pipeline/position';
 
 const processEvents = (
   eventsByDate,
@@ -168,6 +178,58 @@ class Events extends PureComponent {
     return moment(initialDate).add(dayIndex, 'days').isSame(today, 'day');
   };
 
+  processDisabledDates = memoizeOne((disabledRanges, minHour, maxHour) => {
+    // totalEvents stores events in each day of numberOfDays
+    // example: [[event1, event2], [event3, event4], [event5]], each child array
+    // is events for specific day in range
+    const regularItemWidth = this.props.dayWidth;
+    if (!disabledRanges) {
+      return null;
+    }
+
+    const _disabledRanges = disabledRanges.map((dates) =>
+      dates.map((d) => {
+        const start = moment(d.startDate);
+        const end = moment(d.endDate);
+        if (start.hour() < minHour) {
+          start.hour(minHour);
+        }
+
+        if (end.hour() > maxHour) {
+          end.hour(maxHour);
+        }
+
+        const currentTop = computeTop(
+          start,
+          this.context.verticalResolution,
+          minHour * 60,
+        );
+
+        const currentHeight = computeHeight(
+          start,
+          end,
+          this.context.verticalResolution,
+        );
+
+        return {
+          data: {
+            ...d,
+            color: 'grey',
+            startDate: start.toDate(),
+            endDate: end.toDate(),
+          },
+          style: {
+            top: currentTop,
+            left: 0,
+            height: currentHeight,
+            width: regularItemWidth,
+          },
+        };
+      }),
+    );
+    return _disabledRanges;
+  });
+
   render() {
     const {
       eventsByDate,
@@ -183,6 +245,7 @@ class Events extends PureComponent {
       EventComponent,
       rightToLeft,
       beginAgendaAt,
+      endAgendaAt,
       showNowLine,
       nowLineColor,
       onDragEvent,
@@ -194,12 +257,28 @@ class Events extends PureComponent {
       editingEventId,
       editEventConfig,
       dragEventConfig,
+      disabledRanges,
     } = this.props;
     const totalEvents = this.processEvents(
       eventsByDate,
       initialDate,
       numberOfDays,
       rightToLeft,
+    );
+
+    // console.log('beginAgendaAtbeginAgendaAtbeginAgendaAtbeginAgendaAt');
+    // console.log('beginAgendaAtbeginAgendaAt');
+    // console.log('beginAgendaAt');
+    // console.log(beginAgendaAt);
+    // console.log(endAgendaAt);
+    // console.log('endAgendaAt');
+    // console.log('endAgendaAtendAgendaAt');
+    // console.log('endAgendaAtendAgendaAtendAgendaAtendAgendaAtendAgendaAt');
+    // eslint-disable-next-line no-underscore-dangle
+    const _disabledRanges = this.processDisabledDates(
+      disabledRanges,
+      beginAgendaAt / 60,
+      endAgendaAt / 60,
     );
 
     return (
@@ -227,6 +306,18 @@ class Events extends PureComponent {
                   beginAgendaAt={beginAgendaAt}
                 />
               )}
+              {_disabledRanges &&
+                _disabledRanges[(moment(initialDate).day() + dayIndex) % 7] &&
+                _disabledRanges[
+                  (moment(initialDate).day() + dayIndex) % 7
+                ].map((item, index) => (
+                  <DisabledRange
+                    key={`disabled-${dayIndex}-${index}`}
+                    event={item.data}
+                    position={item.style}
+                    containerStyle={eventContainerStyle}
+                  />
+                ))}
               {eventsInSection.map((item) => {
                 const { ref: event, box, overlap = {} } = item;
                 return (
@@ -249,6 +340,7 @@ class Events extends PureComponent {
                     editingEventId={editingEventId}
                     editEventConfig={editEventConfig}
                     dragEventConfig={dragEventConfig}
+                    disabledRanges={_disabledRanges}
                   />
                 );
               })}
@@ -281,11 +373,15 @@ Events.propTypes = {
   showNowLine: PropTypes.bool,
   nowLineColor: PropTypes.string,
   beginAgendaAt: PropTypes.number,
+  endAgendaAt: PropTypes.number,
   onDragEvent: PropTypes.func,
   pageWidth: PropTypes.number.isRequired,
   dayWidth: PropTypes.number.isRequired,
   onEditEvent: PropTypes.func,
-  editingEventId: PropTypes.number,
+  editingEventId: PropTypes.string,
+  disabledRanges: PropTypes.arrayOf(
+    PropTypes.arrayOf(DisabledRange.propTypes.event),
+  ),
 };
 
 export default Events;

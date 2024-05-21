@@ -22,8 +22,14 @@
  *       see examples below.
 
  */
+import { Dimensions } from 'react-native';
+
 export const HEADER_HEIGHT = 50;
 export const CONTENT_TOP_PADDING = 16;
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+export const CONTENT_OFFSET = 16;
+export const CONTAINER_HEIGHT = SCREEN_HEIGHT - 60;
+export const CONTAINER_WIDTH = SCREEN_WIDTH - 60;
 
 /**
  * Convert time in the day (expressed in minutes) to top (pixels in y dim).
@@ -40,6 +46,12 @@ export const minutesInDayToTop = (
 ) => {
   'worklet';
 
+  // console.log('MINUTES IN DAY');
+  // console.log(minutes);
+  // console.log('verticalResolution');
+  // console.log(verticalResolution);
+  // console.log('minutesOffset');
+  // console.log(minutesOffset);
   return (
     (minutes - (minutesOffset || 0)) * verticalResolution.value +
     CONTENT_TOP_PADDING
