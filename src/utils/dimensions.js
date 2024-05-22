@@ -46,12 +46,6 @@ export const minutesInDayToTop = (
 ) => {
   'worklet';
 
-  // console.log('MINUTES IN DAY');
-  // console.log(minutes);
-  // console.log('verticalResolution');
-  // console.log(verticalResolution);
-  // console.log('minutesOffset');
-  // console.log(minutesOffset);
   return (
     (minutes - (minutesOffset || 0)) * verticalResolution.value +
     CONTENT_TOP_PADDING

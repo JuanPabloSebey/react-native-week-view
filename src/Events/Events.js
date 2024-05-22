@@ -28,7 +28,7 @@ import {
 import DisabledRange from '../DisabledRange/DisabledRange';
 
 import styles from './Events.styles';
-import { resolveEventOverlaps } from '../pipeline/overlap';
+import resolveEventOverlaps from '../pipeline/overlap';
 import {
   computeHeight,
   computeWidth,
@@ -266,14 +266,6 @@ class Events extends PureComponent {
       rightToLeft,
     );
 
-    // console.log('beginAgendaAtbeginAgendaAtbeginAgendaAtbeginAgendaAt');
-    // console.log('beginAgendaAtbeginAgendaAt');
-    // console.log('beginAgendaAt');
-    // console.log(beginAgendaAt);
-    // console.log(endAgendaAt);
-    // console.log('endAgendaAt');
-    // console.log('endAgendaAtendAgendaAt');
-    // console.log('endAgendaAtendAgendaAtendAgendaAtendAgendaAtendAgendaAt');
     // eslint-disable-next-line no-underscore-dangle
     const _disabledRanges = this.processDisabledDates(
       disabledRanges,

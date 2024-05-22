@@ -165,7 +165,7 @@ const addOverlappedToArray = (baseArr, overlappedArr) => {
   });
 };
 
-export const resolveEventOverlaps = (events) => {
+const resolveEventOverlaps = (events) => {
   let overlappedSoFar = [];
   let latestTimestamp = -1;
   const resolvedEvents = events.reduce((accumulated, eventWithMeta) => {
@@ -192,25 +192,4 @@ export const resolveEventOverlaps = (events) => {
   return resolvedEvents;
 };
 
-export const overlappingWithDisabled = (
-  eventTop,
-  eventBottom,
-  disabledRanges,
-) => {
-  // eslint-disable-next-line no-restricted-syntax
-  console.log('check overlap check overlap');
-  console.log('check overlap check overlap');
-  console.log('check overlap check overlap');
-  for (const range of disabledRanges) {
-    if (eventTop <= range.style.height && eventBottom >= range.style.top) {
-      console.log(
-        'Overlap',
-        eventTop,
-        eventBottom,
-        'to',
-        range.style.top,
-        range.style.height,
-      );
-    }
-  }
-};
+export default resolveEventOverlaps;

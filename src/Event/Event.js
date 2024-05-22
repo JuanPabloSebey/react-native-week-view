@@ -1,3 +1,6 @@
+/* eslint-disable no-case-declarations */
+/* eslint-disable no-shadow */
+/* eslint-disable no-restricted-syntax */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { View, Text } from 'react-native';
@@ -24,7 +27,6 @@ import {
   computeTop,
 } from '../pipeline/position';
 import { useVerticalDimensionContext } from '../utils/VerticalDimContext';
-import { overlappingWithDisabled } from '../pipeline/overlap';
 
 const DEFAULT_COLOR = 'red';
 const SIDES = ['bottom', 'top', 'left', 'right'];
@@ -36,9 +38,13 @@ const Circle = ({ side }) => (
   />
 );
 
-const Circles = ({ isEditing, editEventConfig, buildCircleGesture, event }) => {
-  console.log('FROM CIRCLES');
-  console.log(event);
+const Circles = ({
+  isEditing,
+  editEventConfig,
+  buildCircleGesture,
+  event,
+  disabledRanges,
+}) => {
   return isEditing
     ? SIDES.reduce((acc, side) => {
         if (editEventConfig[side]) {
@@ -260,54 +266,54 @@ const Event = ({
     longPressGesture,
     pressGesture,
   );
-  // console.log('_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_');
-  // console.log('_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_');
-  console.log('_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_');
-  console.log(JSON.stringify(event, null, 2));
-  // console.log(disabledRanges[moment(event.startDate).day()]);
-  console.log('_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_');
-  // console.log('_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_');
 
+  const eventStartDay = moment(Number.parseInt(boxStartTimestamp, 10)).day();
   const buildCircleGesture = (side, localEvent) => {
-    console.log('evento arriba original', event);
-    console.log('evento arriba parametro', localEvent);
     return Gesture.Pan()
       .runOnJS(runGesturesOnJS)
       .onUpdate((panEvt) => {
-        console.log('evento abajo original', event);
-        console.log('evento abajo parametro', localEvent);
+        const round = (n) => {
+          return Math.round(n * 10) / 10;
+        };
+        const overlappingWithDisabled = (
+          eventTop,
+          eventBottom,
+          disabledRanges,
+        ) => {
+          // eslint-disable-next-line no-restricted-syntax
+          for (const range of disabledRanges) {
+            if (
+              round(eventTop) < round(range.style.top + range.style.height) &&
+              round(eventBottom) > round(range.style.top)
+            ) {
+              return true;
+            }
+          }
+          return false;
+        };
         const { translationX, translationY } = panEvt;
         const minStep = timeLabelHeight.value / 4;
         const diff = Math.floor(translationY / minStep) * minStep;
 
         switch (side) {
           case 'top':
-            // console.log('%%%%%%%%TOP%%%%%%%%%%');
-            // console.log(disabledRanges);
-            // console.log(event);
-            // console.log(moment(boxStartTimestamp), moment(boxEndTimestamp));
-            // console.log(moment(local.value.startDate).day());
-            // console.log(disabledRanges[moment(localEvent.startDate).day()]);
-            overlappingWithDisabled(
-              diff,
-              resizeByEdit.bottom.value,
-              disabledRanges[moment(localEvent.startDate).day()],
+            const overlapTop = overlappingWithDisabled(
+              currentTop.value + diff,
+              currentHeight.value - diff,
+              disabledRanges[eventStartDay],
             );
-            if (translationY < currentHeight.value) {
+
+            if (translationY < currentHeight.value && !overlapTop) {
               resizeByEdit.top.value = diff;
             }
             break;
           case 'bottom':
-            console.log('%%%%%%%%BOTTOM%%%%%%%%%%');
-            console.log(event.startDate);
-            console.log(moment(event.startDate).day());
-            console.log(disabledRanges[moment(event.startDate).day()]);
-            overlappingWithDisabled(
-              diff,
-              resizeByEdit.bottom.value,
-              disabledRanges[moment(event.startDate).day()],
+            const overlapBottom = overlappingWithDisabled(
+              currentTop.value,
+              currentTop.value + currentHeight.value + diff,
+              disabledRanges[eventStartDay],
             );
-            if (translationY > -currentHeight.value) {
+            if (translationY > -currentHeight.value && !overlapBottom) {
               if (currentHeight.value + diff >= minStep) {
                 resizeByEdit.bottom.value = diff;
               }
@@ -393,6 +399,7 @@ const Event = ({
         )}
         <Circles
           event={event}
+          disabledRanges={disabledRanges}
           isEditing={isEditing}
           editEventConfig={editEventConfig}
           buildCircleGesture={buildCircleGesture}
