@@ -300,16 +300,16 @@ class Events extends PureComponent {
               )}
               {_disabledRanges &&
                 _disabledRanges[(moment(initialDate).day() + dayIndex) % 7] &&
-                _disabledRanges[
-                  (moment(initialDate).day() + dayIndex) % 7
-                ].map((item, index) => (
-                  <DisabledRange
-                    key={`disabled-${dayIndex}-${index}`}
-                    event={item.data}
-                    position={item.style}
-                    containerStyle={eventContainerStyle}
-                  />
-                ))}
+                _disabledRanges[(moment(initialDate).day() + dayIndex) % 7].map(
+                  (item, index) => (
+                    <DisabledRange
+                      key={`disabled-${dayIndex}-${index}`}
+                      event={item.data}
+                      position={item.style}
+                      containerStyle={eventContainerStyle}
+                    />
+                  ),
+                )}
               {eventsInSection.map((item) => {
                 const { ref: event, box, overlap = {} } = item;
                 return (

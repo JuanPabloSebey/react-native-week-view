@@ -96,12 +96,8 @@ const Event = ({
     !!onDrag && editingEventId == null && !event.disableDrag;
 
   const runGesturesOnJS = React.useContext(RunGesturesOnJSContext);
-  const {
-    verticalResolution,
-    beginAgendaAt,
-    timeLabelHeight,
-  } = useVerticalDimensionContext();
-  const local = useSharedValue(event);
+  const { verticalResolution, beginAgendaAt, timeLabelHeight } =
+    useVerticalDimensionContext();
 
   // Wrappers are needed due to RN-reanimated runOnJS behavior. See docs:
   // https://docs.swmansion.com/react-native-reanimated/docs/api/miscellaneous/runOnJS
@@ -391,7 +387,14 @@ const Event = ({
         ]}
       >
         {EventComponent ? (
-          <EventComponent event={event} />
+          <EventComponent
+            event={event}
+            position={{
+              width: animatedStyles.width,
+              height: currentHeight.value,
+            }}
+            isEditing={isEditing}
+          />
         ) : (
           <Text style={[styles.description, textStyle, event.textStyle]}>
             {event.description}

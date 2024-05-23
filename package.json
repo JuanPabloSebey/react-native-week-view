@@ -1,6 +1,6 @@
 {
   "name": "react-native-week-view",
-  "version": "0.31.87",
+  "version": "0.31.115",
   "description": "Week View Calendar for React Native",
   "main": "index.js",
   "types": "index.d.ts",
@@ -44,12 +44,9 @@
   "devDependencies": {
     "@babel/core": "^7.13.16",
     "@babel/preset-env": "^7.13.15",
-    "@testing-library/jest-native": "^4.0.5",
-    "@testing-library/react-native": "^9.1.0",
     "@types/jest": "^29.0.1",
     "@types/react": "18.2.0",
     "@types/react-native": "0.73.0",
-    "@types/react-test-renderer": "^18.0.0",
     "@typescript-eslint/eslint-plugin": "^5.37.0",
     "@typescript-eslint/parser": "^5.37.0",
     "babel-eslint": "^10.1.0",
@@ -70,7 +67,6 @@
     "react-native": "0.73.0",
     "react-native-gesture-handler": "~2.16.1",
     "react-native-reanimated": "~3.10.1",
-    "react-test-renderer": "17.0.2",
     "typescript": "^4.8.3"
   },
   "peerDependencies": {

@@ -252,5 +252,6 @@ export interface WeekViewProps {
 }
 
 declare const WeekView: React.ComponentType<WeekViewProps>;
+export { addLocale, createFixedWeekDate } from './src/utils/dates';
 
 export default WeekView;

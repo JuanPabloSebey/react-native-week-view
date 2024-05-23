@@ -83,9 +83,8 @@ export default class WeekView extends Component {
       props.pageStartAt,
       props.prependMostRecent,
     );
-    const { width: windowWidth, height: windowHeight } = Dimensions.get(
-      'window',
-    );
+    const { width: windowWidth, height: windowHeight } =
+      Dimensions.get('window');
     this.state = {
       // currentMoment should always be the first date of the current page
       currentMoment: moment(initialDates[this.currentPageIndex]).toDate(),
@@ -445,10 +444,8 @@ export default class WeekView extends Component {
 
       this.setState(newState, newStateCallback);
 
-      const {
-        onSwipePrev: onSwipeToThePast,
-        onSwipeNext: onSwipeToTheFuture,
-      } = this.props;
+      const { onSwipePrev: onSwipeToThePast, onSwipeNext: onSwipeToTheFuture } =
+        this.props;
       const callback = movedDays > 0 ? onSwipeToTheFuture : onSwipeToThePast;
       if (callback) {
         callback(newMoment);
@@ -522,12 +519,8 @@ export default class WeekView extends Component {
       onTimeScrolled,
       disabledRanges,
     } = this.props;
-    const {
-      currentMoment,
-      initialDates,
-      windowWidth,
-      windowHeight,
-    } = this.state;
+    const { currentMoment, initialDates, windowWidth, windowHeight } =
+      this.state;
     const times = this.calculateTimes(
       timeStep,
       formatTimeLabel,
@@ -543,15 +536,8 @@ export default class WeekView extends Component {
       (prependMostRecent && !rightToLeft) ||
       (!prependMostRecent && rightToLeft);
 
-    const {
-      pageWidth,
-      dayWidth,
-      timeLabelsWidth,
-    } = computeHorizontalDimensions(
-      windowWidth,
-      numberOfDays,
-      timesColumnWidth,
-    );
+    const { pageWidth, dayWidth, timeLabelsWidth } =
+      computeHorizontalDimensions(windowWidth, numberOfDays, timesColumnWidth);
 
     this.dimensions = {
       dayWidth,

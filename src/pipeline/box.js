@@ -86,15 +86,14 @@ const bucketEventsByDate = (events) => {
       }
       case EVENT_KINDS.STANDARD:
       default:
-        unrollStandardEvent(
-          event,
-        ).forEach(({ bucketDate, boxStartDate, boxEndDate }) =>
-          regularEvents.addEventToBucket(
-            bucketDate,
-            event,
-            boxStartDate,
-            boxEndDate,
-          ),
+        unrollStandardEvent(event).forEach(
+          ({ bucketDate, boxStartDate, boxEndDate }) =>
+            regularEvents.addEventToBucket(
+              bucketDate,
+              event,
+              boxStartDate,
+              boxEndDate,
+            ),
         );
         break;
     }

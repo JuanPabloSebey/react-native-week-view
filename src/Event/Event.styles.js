@@ -19,21 +19,26 @@ const styles = StyleSheet.create({
 const circleDiameter = 15;
 const baseCircleStyle = {
   position: 'absolute',
-  borderColor: 'black',
-  borderWidth: 1,
+  borderColor: '#F8D33C',
+  backgroundColor: 'hsla(48, 93%, 60%, 0.5)',
+  borderWidth: 2,
   borderRadius: circleDiameter,
   height: circleDiameter,
-  width: 40,
-  backgroundColor: 'white',
+  // width: 40,
+  // backgroundColor: 'white',
 };
 
 export const circleStyles = StyleSheet.create({
   top: {
     ...baseCircleStyle,
+    left: 0,
+    right: 0,
     top: -circleDiameter / 2,
   },
   bottom: {
     ...baseCircleStyle,
+    left: 0,
+    right: 0,
     bottom: -circleDiameter / 2,
   },
   left: {
