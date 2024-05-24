@@ -27,6 +27,7 @@ import {
   computeTop,
 } from '../pipeline/position';
 import { useVerticalDimensionContext } from '../utils/VerticalDimContext';
+import { availableSteps } from '../utils/dates';
 
 const DEFAULT_COLOR = 'red';
 const SIDES = ['bottom', 'top', 'left', 'right'];
@@ -47,18 +48,18 @@ const Circles = ({
 }) => {
   return isEditing
     ? SIDES.reduce((acc, side) => {
-        if (editEventConfig[side]) {
-          acc.push(
-            <GestureDetector
-              key={side}
-              gesture={buildCircleGesture(side, event)}
-            >
-              <Circle side={side} />
-            </GestureDetector>,
-          );
-        }
-        return acc;
-      }, [])
+      if (editEventConfig[side]) {
+        acc.push(
+          <GestureDetector
+            key={side}
+            gesture={buildCircleGesture(side, event)}
+          >
+            <Circle side={side} />
+          </GestureDetector>,
+        );
+      }
+      return acc;
+    }, [])
     : [];
 };
 
@@ -87,6 +88,7 @@ const Event = ({
   editEventConfig,
   dragEventConfig,
   disabledRanges,
+  step,
 }) => {
   const dragAfterLongPress =
     (dragEventConfig && dragEventConfig.afterLongPressDuration) || 0;
@@ -288,7 +290,7 @@ const Event = ({
           return false;
         };
         const { translationX, translationY } = panEvt;
-        const minStep = timeLabelHeight.value / 4;
+        const minStep = timeLabelHeight.value / step;
         const diff = Math.floor(translationY / minStep) * minStep;
 
         switch (side) {
@@ -431,6 +433,7 @@ Event.propTypes = {
   editingEventId: PropTypes.string,
   editEventConfig: EditEventConfigPropType,
   disabledRanges: PropTypes.array,
+  step: PropTypes.oneOf(availableSteps),
 };
 
 export default React.memo(Event);

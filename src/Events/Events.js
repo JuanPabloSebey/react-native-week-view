@@ -17,7 +17,7 @@ import {
   GridRowPropType,
   GridColumnPropType,
 } from '../utils/types';
-import { calculateDaysArray, availableNumberOfDays } from '../utils/dates';
+import { calculateDaysArray, availableNumberOfDays, availableSteps } from '../utils/dates';
 import { topToSecondsInDay as topToSecondsInDayFromUtils } from '../utils/dimensions';
 import { ViewWithTouchable } from '../utils/gestures';
 import {
@@ -258,6 +258,7 @@ class Events extends PureComponent {
       editEventConfig,
       dragEventConfig,
       disabledRanges,
+      step,
     } = this.props;
     const totalEvents = this.processEvents(
       eventsByDate,
@@ -333,6 +334,7 @@ class Events extends PureComponent {
                     editEventConfig={editEventConfig}
                     dragEventConfig={dragEventConfig}
                     disabledRanges={_disabledRanges}
+                    step={step}
                   />
                 );
               })}
@@ -374,6 +376,7 @@ Events.propTypes = {
   disabledRanges: PropTypes.arrayOf(
     PropTypes.arrayOf(DisabledRange.propTypes.event),
   ),
+  step: PropTypes.oneOf(availableSteps)
 };
 
 export default Events;

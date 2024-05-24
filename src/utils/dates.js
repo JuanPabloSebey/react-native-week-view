@@ -2,6 +2,7 @@ import moment from 'moment';
 
 export const DATE_STR_FORMAT = 'YYYY-MM-DD';
 export const availableNumberOfDays = [1, 3, 5, 7];
+export const availableSteps = [1, 2, 4]; // "1" = 60 minutes / "2" = 30 minutes / "4" = 15 minutes step
 
 export const setLocale = (locale) => {
   if (locale) {

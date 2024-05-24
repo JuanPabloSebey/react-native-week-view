@@ -24,6 +24,7 @@ import {
 import {
   DATE_STR_FORMAT,
   availableNumberOfDays,
+  availableSteps,
   setLocale,
 } from '../utils/dates';
 import { mod } from '../utils/misc';
@@ -406,7 +407,7 @@ export default class WeekView extends Component {
       const newState = {
         currentMoment: newMoment,
       };
-      let newStateCallback = () => {};
+      let newStateCallback = () => { };
 
       const buffer = PAGES_OFFSET;
       const pagesToStartOfList = newPageIndex;
@@ -518,6 +519,7 @@ export default class WeekView extends Component {
       runOnJS,
       onTimeScrolled,
       disabledRanges,
+      step,
     } = this.props;
     const { currentMoment, initialDates, windowWidth, windowHeight } =
       this.state;
@@ -546,12 +548,12 @@ export default class WeekView extends Component {
 
     const horizontalScrollProps = allowScrollByDay
       ? {
-          decelerationRate: 'fast',
-          snapToInterval: dayWidth,
-        }
+        decelerationRate: 'fast',
+        snapToInterval: dayWidth,
+      }
       : {
-          pagingEnabled: true,
-        };
+        pagingEnabled: true,
+      };
 
     return (
       <GestureHandlerRootView style={styles.container}>
@@ -668,6 +670,7 @@ export default class WeekView extends Component {
                           editEventConfig={editEventConfig}
                           dragEventConfig={dragEventConfig}
                           disabledRanges={disabledRanges}
+                          step={step}
                         />
                       );
                     }}
@@ -741,6 +744,7 @@ WeekView.propTypes = {
   disableVirtualization: PropTypes.bool,
   runOnJS: PropTypes.bool,
   disabledRanges: Events.propTypes.disabledRanges,
+  step: PropTypes.oneOf(availableSteps),
 };
 
 WeekView.defaultProps = {
