@@ -34,6 +34,7 @@ export interface EventComponentProps {
     height: number;
     width: number;
   };
+  isEditing: boolean;
 }
 export interface RefreshComponentProps {
   style: ViewStyle;
