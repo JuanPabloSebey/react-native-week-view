@@ -50,6 +50,7 @@ export interface WeekViewProps {
   events: WeekViewEvent[];
   selectedDate: Date;
   numberOfDays: 1 | 3 | 5 | 7;
+  step: 1 | 2 | 4;
 
   // Gesture interactions
   /**
