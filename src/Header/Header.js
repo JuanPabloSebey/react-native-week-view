@@ -69,7 +69,7 @@ const WeekViewHeader = ({
   currentDate,
   allDayEvents,
   initialDates,
-  formatDate,
+  formatDate = 'MMM D',
   style,
   textStyle,
   eventContainerStyle,
@@ -169,10 +169,6 @@ WeekViewHeader.propTypes = {
   initialNumToRender: PropTypes.number,
   maxToRenderPerBatch: PropTypes.number,
   updateCellsBatchingPeriod: PropTypes.number,
-};
-
-WeekViewHeader.defaultProps = {
-  formatDate: 'MMM D',
 };
 
 export default WeekViewHeader;
