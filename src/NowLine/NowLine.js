@@ -28,7 +28,7 @@ const useMinutesNow = (updateEvery = UPDATE_EVERY_MILLISECONDS) => {
   return minutesInDay(now);
 };
 
-const NowLine = ({ beginAgendaAt, color, width }) => {
+const NowLine = ({ beginAgendaAt = 0, color = '#e53935', width }) => {
   const { verticalResolution } = useVerticalDimensionContext();
   const minutesNow = useMinutesNow();
 
@@ -67,11 +67,6 @@ NowLine.propTypes = {
   width: PropTypes.number.isRequired,
   beginAgendaAt: PropTypes.number,
   color: PropTypes.string,
-};
-
-NowLine.defaultProps = {
-  color: '#e53935',
-  beginAgendaAt: 0,
 };
 
 export default React.memo(NowLine);
