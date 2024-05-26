@@ -32,9 +32,9 @@ import { availableSteps } from '../utils/dates';
 const DEFAULT_COLOR = 'red';
 const SIDES = ['bottom', 'top', 'left', 'right'];
 
-const Circle = ({ side }) => (
+const Circle = ({ side, style }) => (
   <View
-    style={circleStyles[side]}
+    style={[circleStyles[side], style]}
     hitSlop={{ bottom: 10, left: 10, right: 10, top: 10 }}
   />
 );
@@ -54,7 +54,7 @@ const Circles = ({
             key={side}
             gesture={buildCircleGesture(side, event)}
           >
-            <Circle side={side} />
+            <Circle side={side} style={event.circleStyle} />
           </GestureDetector>,
         );
       }
@@ -82,6 +82,7 @@ const Event = ({
   EventComponent,
   containerStyle,
   textStyle,
+  circleStyle,
   onDrag,
   onEdit,
   editingEventId,

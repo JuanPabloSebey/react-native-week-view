@@ -13,6 +13,7 @@ export interface WeekViewEvent extends Record<string, any> {
   stackKey?: string;
   color?: string;
   style?: StyleProp<ViewStyle>;
+  circleStyle?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
   disableDrag?: boolean;
   disablePress?: boolean;
