@@ -3,7 +3,7 @@ import moment from 'moment';
 import { DATE_STR_FORMAT } from './dates';
 
 // FlatList configuration
-export const PAGES_OFFSET = 2;
+export const PAGES_OFFSET = 1;
 export const DEFAULT_WINDOW_SIZE = PAGES_OFFSET * 2 + 1;
 
 export const getRawDayOffset = (newDayOffset, options = {}) => {

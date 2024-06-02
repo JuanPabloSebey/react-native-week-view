@@ -143,6 +143,7 @@ export default class WeekView extends Component {
       );
     }
     if (this.state.windowWidth !== prevState.windowWidth) {
+      console.log('windowWidth changed');
       // NOTE: after a width change, the position may be off by a few days
       this.eventsGrid.current.scrollToIndex({
         index: this.currentPageIndex,
@@ -187,17 +188,17 @@ export default class WeekView extends Component {
 
   getSignToTheFuture = () => (this.isAppendingTheFuture() ? 1 : -1);
 
-  buildPages = (fromDate, nPages, appending) => {
-    const timeSign = this.isAppendingTheFuture() === !!appending ? 1 : -1;
-    const deltaDays = timeSign * this.props.numberOfDays;
+  // buildPages = (fromDate, nPages, appending) => {
+  //   const timeSign = this.isAppendingTheFuture() === !!appending ? 1 : -1;
+  //   const deltaDays = timeSign * this.props.numberOfDays;
 
-    const newPages = Array.from({ length: nPages }, (_, index) =>
-      moment(fromDate)
-        .add((index + 1) * deltaDays, 'days')
-        .format(DATE_STR_FORMAT),
-    );
-    return appending ? newPages : newPages.reverse();
-  };
+  //   const newPages = Array.from({ length: nPages }, (_, index) =>
+  //     moment(fromDate)
+  //       .add((index + 1) * deltaDays, 'days')
+  //       .format(DATE_STR_FORMAT),
+  //   );
+  //   return appending ? newPages : newPages.reverse();
+  // };
 
   // goToDate = (targetDate, options) => {
   //   const targetDateMoment = moment(targetDate);
@@ -403,73 +404,77 @@ export default class WeekView extends Component {
   };
 
   horizontalScrollEnded = (newXPosition) => {
-    console.log('horizontalScrollEnded');
-    const { pageWidth, dayWidth } = this.dimensions;
-    const { initialDates, currentMoment: oldMoment } = this.state;
+    console.log('horizontalScrollEnded', newXPosition);
 
-    const newPageIndex = Math.floor(newXPosition / pageWidth);
-    const dayOffset = Math.round((newXPosition % pageWidth) / dayWidth);
-    const movedPages = newPageIndex - this.currentPageIndex;
-    this.currentPageIndex = newPageIndex;
+    this.currentPageIndex = 0;
+    const dates = this.state.initialDates;
 
-    const newMoment = moment(initialDates[newPageIndex])
-      .add(dayOffset, 'd')
-      .toDate();
-
-    const movedDays = moment(newMoment).diff(oldMoment, 'd');
-
-    if (movedDays === 0) {
+    if (newXPosition === 0) {
+      console.log('movedDays === 0');
       return;
     }
 
     InteractionManager.runAfterInteractions(() => {
-      const newState = {
-        currentMoment: newMoment,
-      };
-      let newStateCallback = () => {};
+      // let newStateCallback = () => {};
 
-      const buffer = PAGES_OFFSET;
-      const pagesToStartOfList = newPageIndex;
-      const pagesToEndOfList = initialDates.length - newPageIndex - 1;
+      // const buffer = PAGES_OFFSET;
+      // const pagesToStartOfList = newPageIndex;
+      // const pagesToEndOfList = initialDates.length - newPageIndex - 1;
 
-      if (movedPages < 0 && pagesToStartOfList < buffer) {
-        const prependNeeded = buffer - pagesToStartOfList;
+      // if (movedPages < 0 && pagesToStartOfList < buffer) {
+      //   const prependNeeded = buffer - pagesToStartOfList;
 
-        newState.initialDates = [
-          ...this.buildPages(initialDates[0], prependNeeded, false),
-          ...initialDates,
-        ];
+      //   newState.initialDates = [
+      //     ...this.buildPages(initialDates[0], prependNeeded, false),
+      //     ...initialDates,
+      //   ];
 
-        // After prepending, it needs to scroll to fix its position,
-        // to mantain visible content position (mvcp)
-        this.currentPageIndex += prependNeeded;
-        const scrollToCurrentIndexAndOffset = () =>
+      //   // After prepending, it needs to scroll to fix its position,
+      //   // to mantain visible content position (mvcp)
+      //   this.currentPageIndex += prependNeeded;
+      //   const scrollToCurrentIndexAndOffset = () =>
+      //     this.eventsGrid.current.scrollToIndex({
+      //       index: this.currentPageIndex,
+      //       viewOffset: VIEW_OFFSET_SIGN * dayOffset * dayWidth,
+      //       animated: false,
+      //     });
+      //   newStateCallback = () => setTimeout(scrollToCurrentIndexAndOffset, 0);
+      // } else if (movedPages > 0 && pagesToEndOfList < buffer) {
+      //   const appendNeeded = buffer - pagesToEndOfList;
+      //   newState.initialDates = [
+      //     ...initialDates,
+      //     ...this.buildPages(
+      //       initialDates[initialDates.length - 1],
+      //       appendNeeded,
+      //       true,
+      //     ),
+      //   ];
+      // }
+
+      this.setState(
+        {
+          initialDates: [
+            moment(dates[0]).add(3, 'days').format(DATE_STR_FORMAT),
+          ], // fecha a la que me muevo
+          currentMoment: moment(dates[0]).add(3, 'days').toDate(), // Fecha a la que me muevo,
+        },
+        () => {
           this.eventsGrid.current.scrollToIndex({
-            index: this.currentPageIndex,
-            viewOffset: VIEW_OFFSET_SIGN * dayOffset * dayWidth,
+            index: 1,
+            viewOffset: 0,
             animated: false,
           });
-        newStateCallback = () => setTimeout(scrollToCurrentIndexAndOffset, 0);
-      } else if (movedPages > 0 && pagesToEndOfList < buffer) {
-        const appendNeeded = buffer - pagesToEndOfList;
-        newState.initialDates = [
-          ...initialDates,
-          ...this.buildPages(
-            initialDates[initialDates.length - 1],
-            appendNeeded,
-            true,
-          ),
-        ];
-      }
+        },
+      );
 
-      this.setState(newState, newStateCallback);
-
-      const { onSwipePrev: onSwipeToThePast, onSwipeNext: onSwipeToTheFuture } =
-        this.props;
-      const callback = movedDays > 0 ? onSwipeToTheFuture : onSwipeToThePast;
-      if (callback) {
-        callback(newMoment);
-      }
+      this.props.onSwipeNext &&
+        this.props.onSwipeNext(moment(dates[0]).add(3, 'days').toDate());
+      // const { onSwipePrev: onSwipeToThePast, onSwipeNext: onSwipeToTheFuture } =
+      //   this.props;
+      // const callback = movedDays > 0 ? onSwipeToTheFuture : onSwipeToThePast;
+      // if (callback) {
+      //   callback(newMoment);
+      // }
     });
   };
 
@@ -590,7 +595,13 @@ export default class WeekView extends Component {
               numberOfDays={numberOfDays}
               currentDate={currentMoment}
               allDayEvents={allDayEvents}
-              initialDates={initialDates}
+              initialDates={[
+                moment(initialDates[0])
+                  .subtract(3, 'day')
+                  .format(DATE_STR_FORMAT),
+                ...initialDates,
+                moment(initialDates[0]).add(3, 'day').format(DATE_STR_FORMAT),
+              ]}
               formatDate={formatDateHeader}
               style={headerStyle}
               textStyle={headerTextStyle}
@@ -640,7 +651,15 @@ export default class WeekView extends Component {
                 />
                 <RunGesturesOnJSContext.Provider value={runOnJS}>
                   <HorizontalSyncFlatList
-                    data={initialDates}
+                    data={[
+                      moment(initialDates[0])
+                        .subtract(3, 'day')
+                        .format(DATE_STR_FORMAT),
+                      ...initialDates,
+                      moment(initialDates[0])
+                        .add(3, 'day')
+                        .format(DATE_STR_FORMAT),
+                    ]}
                     getItemLayout={this.getListItemLayout}
                     keyExtractor={identity}
                     initialScrollIndex={PAGES_OFFSET}
