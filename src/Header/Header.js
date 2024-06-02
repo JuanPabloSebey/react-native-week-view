@@ -139,6 +139,7 @@ const WeekViewHeader = ({
       initialNumToRender={initialNumToRender}
       maxToRenderPerBatch={maxToRenderPerBatch}
       updateCellsBatchingPeriod={updateCellsBatchingPeriod}
+      removeClippedSubviews
     />
   );
 };

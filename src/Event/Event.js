@@ -48,18 +48,18 @@ const Circles = ({
 }) => {
   return isEditing
     ? SIDES.reduce((acc, side) => {
-      if (editEventConfig[side]) {
-        acc.push(
-          <GestureDetector
-            key={side}
-            gesture={buildCircleGesture(side, event)}
-          >
-            <Circle side={side} style={event.circleStyle} />
-          </GestureDetector>,
-        );
-      }
-      return acc;
-    }, [])
+        if (editEventConfig[side]) {
+          acc.push(
+            <GestureDetector
+              key={side}
+              gesture={buildCircleGesture(side, event)}
+            >
+              <Circle side={side} style={event.circleStyle} />
+            </GestureDetector>,
+          );
+        }
+        return acc;
+      }, [])
     : [];
 };
 

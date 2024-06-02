@@ -25,7 +25,7 @@ export const HeaderRefContextProvider = ({ children }) => {
   );
 };
 
-const ReanimatedFlatList = Animated.createAnimatedComponent(FlatList);
+const ReanimatedFlatList = Animated.FlatList;
 
 export const HorizontalSyncFlatList = React.forwardRef(
   ({ horizontalScrollEnded, ...props }, ref) => {
@@ -67,6 +67,7 @@ export const HorizontalSyncFlatList = React.forwardRef(
     return (
       <ReanimatedFlatList
         onScroll={scrollHandler}
+        // scrollEnabled={false}
         horizontal
         ref={ref}
         // eslint-disable-next-line react/jsx-props-no-spreading

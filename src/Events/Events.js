@@ -17,7 +17,11 @@ import {
   GridRowPropType,
   GridColumnPropType,
 } from '../utils/types';
-import { calculateDaysArray, availableNumberOfDays, availableSteps } from '../utils/dates';
+import {
+  calculateDaysArray,
+  availableNumberOfDays,
+  availableSteps,
+} from '../utils/dates';
 import { topToSecondsInDay as topToSecondsInDayFromUtils } from '../utils/dimensions';
 import { ViewWithTouchable } from '../utils/gestures';
 import {
@@ -376,7 +380,7 @@ Events.propTypes = {
   disabledRanges: PropTypes.arrayOf(
     PropTypes.arrayOf(DisabledRange.propTypes.event),
   ),
-  step: PropTypes.oneOf(availableSteps)
+  step: PropTypes.oneOf(availableSteps),
 };
 
 export default Events;
