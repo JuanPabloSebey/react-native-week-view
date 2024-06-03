@@ -254,7 +254,10 @@ export interface WeekViewProps {
   disabledRanges?: any;
 }
 
-declare const WeekView: React.ComponentType<WeekViewProps>;
+declare const WeekView: React.ComponentType<WeekViewProps> & {
+  goToNextPage: () => void;
+  goToPrevPage: () => void;
+};
 export { addLocale, createFixedWeekDate } from './src/utils/dates';
 
 export default WeekView;
