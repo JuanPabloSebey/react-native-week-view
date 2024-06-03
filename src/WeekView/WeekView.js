@@ -78,7 +78,7 @@ export default class WeekView extends Component {
     this.verticalAgenda = React.createRef();
     this.currentPageIndex = 0;
 
-    const initialDates = [props.selectedDate];
+    const initialDates = [moment(props.selectedDate).format(DATE_STR_FORMAT)];
     const { width: windowWidth, height: windowHeight } =
       Dimensions.get('window');
     this.state = {
